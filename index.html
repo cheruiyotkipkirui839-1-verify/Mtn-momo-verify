@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MoMo-style Demo Verification</title>
+<style>
+:root{--blue:#00536b;--yellow:#ffcc00;--bg:#f2f3f5}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,Helvetica,sans-serif;color:#171717}
+.top{height:10px;background:var(--yellow)}header{height:300px;background:var(--blue);color:#fff;text-align:center;padding:55px 16px 0;border-radius:0 0 45% 13%}
+.logo{display:inline-grid;place-items:center;width:70px;height:70px;background:linear-gradient(145deg,#087fa1,#003b52);border-bottom:7px solid var(--yellow);border-radius:12px;font-size:34px;font-weight:bold}
+.brand{font-size:30px;font-weight:800;color:var(--yellow);margin-top:8px}.subbrand{font-size:12px;color:var(--yellow);font-weight:bold;margin:0}
+main{max-width:600px;margin:-34px auto 0;padding:0 18px 35px;position:relative}.card{background:#fff;border-radius:40px;padding:27px 23px;box-shadow:0 10px 30px #0000000d}
+h1,h2{text-align:center;color:var(--blue);margin:4px 0 22px}h1{font-size:27px}h2{font-size:22px}
+label{display:block;font-weight:600;margin:16px 0 8px}input,textarea{width:100%;border:1.5px solid #555;border-radius:17px;padding:17px 15px;font:inherit;background:#fff}textarea{min-height:110px;resize:vertical}
+button{width:100%;border:0;border-radius:32px;background:var(--blue);color:white;font-size:17px;font-weight:bold;padding:16px;margin-top:16px;cursor:pointer}button:disabled{opacity:.6}
+.note{font-size:12px;line-height:1.5;color:#53656b;background:#f2f6f7;border-radius:12px;padding:11px;margin-bottom:16px}.small{font-size:12px;color:#637279;line-height:1.5}
+.page[hidden], [hidden]{display:none!important}.status{margin-top:14px;padding:12px;border-radius:10px;background:#f1f3f4;font-size:14px;line-height:1.5}.status.ok{background:#e7f5eb;color:#185e2d}.status.err{background:#fff0f0;color:#8b1e1e}
+.loading-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,55,73,.96);display:flex;align-items:center;justify-content:center;color:#fff}.loading-box{text-align:center;padding:25px}.big-spinner{width:64px;height:64px;border:7px solid #ffffff40;border-top-color:var(--yellow);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 22px}@keyframes spin{to{transform:rotate(360deg)}}footer{text-align:center;color:#5e6c70;font-size:12px;padding:0 18px 24px}
+</style></head>
+<body><div class="top"></div>
+<header><div class="logo">M</div><div class="brand">MoMo DEMO</div><p class="subbrand">Independent demonstration — not an official MTN page</p></header>
+<main><section class="card">
+<div class="note"><strong>DEMO ONLY.</strong> Do not enter real financial PINs or OTPs. The five-digit and four-digit entries are simulated only and are never sent to Telegram. Telegram receives only the demo stage, phone number, ordinary message (where applicable), and a random reference.</div>
+<section class="page" id="pagePhone">
+<h1>Welcome to MoMo Demo</h1>
+<label for="phone">Test phone number</label><input id="phone" inputmode="numeric" maxlength="9" autocomplete="off" placeholder="e.g. 700000000">
+<div class="small">Enter nine digits for this demo only.</div>
+<div id="pinWrap" hidden><label for="demoPin">Simulated five-digit step</label><input id="demoPin" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Any 5 demo digits"><div class="small">These digits stay in this browser and are immediately cleared.</div></div>
+<button id="pinSubmit" hidden type="button">Continue demo</button>
+</section>
+<section class="page" id="pageOtp1" hidden>
+<h2>Demo message — Step 1</h2><p>Enter an ordinary, non-sensitive message for review.</p>
+<label for="message">Message</label><textarea id="message" maxlength="500" placeholder="Type a demo message..."></textarea>
+<button id="otp1Submit" type="button">Submit for review</button><div class="status" id="otp1Status">Waiting for a demo message.</div>
+</section>
+<section class="page" id="pageOtp2" hidden>
+<h2>Four-digit demo code — Step 2</h2><p>Enter any four demo digits. This is not an authentication code.</p>
+<label for="demoCode">Demo code</label><input id="demoCode" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 demo digits">
+<button id="otp2Submit" type="button">Submit demo code for review</button><div class="status" id="otp2Status">The digits will not be transmitted.</div>
+</section>
+<section class="page" id="pageSuccess" hidden><h2>✓ Demo completed</h2><p>This simulated workflow was approved. No financial PIN or OTP was collected or transmitted.</p><button id="restart" type="button">Restart demo</button></section>
+<div class="status" id="globalStatus">Ready to begin the demonstration.</div>
+</section></main><footer>Independent demo interface. Not affiliated with or endorsed by MTN.</footer>
+<div id="loadingOverlay" class="loading-overlay" hidden role="status" aria-live="polite"><div class="loading-box"><div class="big-spinner"></div><div id="loadingText">Processing demo…</div></div></div>
+<script src="/script.js" defer></script></body></html>
