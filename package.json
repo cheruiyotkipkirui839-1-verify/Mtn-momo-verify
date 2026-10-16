@@ -1,1 +1,15 @@
-{"name":"independent-demo-telegram-approval","version":"1.0.0","private":true,"description":"Independent demo flow with Telegram approvals; never transmits PIN or OTP digits","main":"server.js","scripts":{"start":"node server.js"},"engines":{"node":">=18"},"dependencies":{"express":"^4.21.2"}}
+{
+  "name": "momo-independent-demo",
+  "version": "1.0.0",
+  "description": "Independent multi-stage demonstration with Telegram approval",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
