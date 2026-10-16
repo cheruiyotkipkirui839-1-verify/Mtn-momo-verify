@@ -38,7 +38,8 @@ async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
   
   // FIXED URL PATH AND STRING INTERPOLATION
-  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
+const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
+
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
