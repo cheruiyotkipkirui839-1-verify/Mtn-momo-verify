@@ -1,0 +1,13 @@
+{
+  "name": "momo-demo-telegram-review",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Clearly labelled demo with Telegram approval and decline at each review stage",
+  "main": "server.js",
+  "scripts": { "start": "node server.js" },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
