@@ -45,10 +45,13 @@ const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     body: JSON.stringify(payload)
   });
   
-  const data = await res.json();
-  if (!res.ok || !data.ok) throw new Error(data.description || "API Failed");
+    const data = await res.json();
+  if (!res.ok || !data.ok) {
+    console.error("TELEGRAM ERROR DETAILS:", data); // This line prints the exact reason
+    throw new Error(data.description || "API Failed");
+  }
   return data;
-}
+
 
 async function notifyDemo(request, label) {
   return telegram("sendMessage", {
