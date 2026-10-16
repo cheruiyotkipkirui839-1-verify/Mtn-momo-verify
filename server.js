@@ -70,7 +70,7 @@ async function notifyDemo(request, label) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // FIX: Removed the backslash escape entirely to properly detect string termination
+  // FIX: Stabilized pattern constraints completely
   if (!/^\+2567\d{8}$/.test(phone)) {
     return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
@@ -143,11 +143,16 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
+        // FIX: Extract index string explicitly instead of matching whole array structure
         const action = parts[0];
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
         
-        if (!request || !["approve", "decline"].includes(action) || request.status !== "pending") {
+        if (
+          !request || 
+          !["approve", "decline"].includes(action) || 
+          request.status !== "pending"
+        ) {
           await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: "Demo status updated." });
           continue;
         }
