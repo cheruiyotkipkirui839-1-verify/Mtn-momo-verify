@@ -38,7 +38,7 @@ async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
   
   // FIXED URL PATH AND STRING INTERPOLATION
-const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
+const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
 
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -51,7 +51,7 @@ const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     throw new Error(data.description || "API Failed");
   }
   return data;
-
+}
 
 async function notifyDemo(request, label) {
   return telegram("sendMessage", {
@@ -197,7 +197,6 @@ app.get("/api/status/:id", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server executing successfully on port ${PORT}`);
-  pollTelegram().catch(err => console.error("Polling system failure:", err));
+  console.log(`Server running on port ${PORT}`);
 });
 
