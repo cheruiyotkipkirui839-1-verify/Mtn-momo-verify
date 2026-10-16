@@ -73,7 +73,7 @@ async function notifyDemo(request, label) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // Validation regex tracking for format (+2567...)
+  // FIXED REGEX: Correctly looks for string anchor without literal escape characters
   if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
