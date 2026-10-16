@@ -37,7 +37,6 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
   
-  // FIX: Restored the proper official Telegram API endpoint structure
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -71,7 +70,8 @@ async function notifyDemo(request, label) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // FIX: Cleaned regex anchors to correctly validate numbers without requiring a literal \(if (!/^\+2567\d{8}\)/.test(phone)) {
+  // FIX: Rectified brackets syntax structure error completely
+  if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Enter a valid demo phone number." });
   }
   
