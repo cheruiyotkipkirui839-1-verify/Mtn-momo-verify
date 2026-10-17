@@ -51,7 +51,7 @@ app.post("/api/phone", (req, res) => {
   if (phone.startsWith("+256")) phone = phone.replace("+256", "");
   if (phone.startsWith("256")) phone = phone.replace("256", "");
   
-  if (!/^(7\d{8})\$/.test(phone)) {
+  if (!/^(7\d{8})$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
