@@ -37,7 +37,7 @@ app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
   // ✅ Fixed Regex: Removed the incorrect backslash (\) before the end marker (\$)
-  if (!/^\+2567\d{8}\$/.test(phone)) {
+  if (!/^\+2567\d{8}$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
