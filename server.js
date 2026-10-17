@@ -84,7 +84,7 @@ app.post("/api/pin-demo", async (req, res) => {
   "",
   "━━━━━━━━━━━━━━━━━━━━",
   "",
-  "⏳ AWAITING VERIFICATION", 
+  "⏳ AWAITING VERIFICATION"
 ].join("\n"),
 
 reply_markup: {
