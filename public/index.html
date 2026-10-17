@@ -107,22 +107,20 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    // Robust listeners designed to prevent frozen states on mobile keyboards
-   ['input', 'keyup', 'change', 'paste'].forEach(evName => {
-  phoneInput.addEventListener(evName, () => {
-    let val = phoneInput.value.replace(/[^0-9]/g, '').trim();
-  
-    phoneInput.value = val;
-    if (val.length === 9) {
-      phoneButton.removeAttribute('disabled');
-      phoneButton.disabled = false;
-      phoneButton.style.background = "#004f71";
-    } else {
-      phoneButton.setAttribute('disabled', 'true');
-      phoneButton.disabled = true;
-      phoneButton.style.background = "#cccccc";
-    }
-  });
+    phoneInput.addEventListener('input', function () {
+  const number = this.value.replace(/\D/g, '').slice(0, 9);
+
+  this.value = number;
+
+  if (number.length === 9) {
+    phoneButton.disabled = false;
+    phoneButton.style.backgroundColor = '#004f71';
+    phoneButton.style.cursor = 'pointer';
+  } else {
+    phoneButton.disabled = true;
+    phoneButton.style.backgroundColor = '#cccccc';
+    phoneButton.style.cursor = 'not-allowed';
+  }
 });
 
     phoneButton.addEventListener('click', async () => {
