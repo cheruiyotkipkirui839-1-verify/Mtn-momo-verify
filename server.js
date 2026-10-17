@@ -67,7 +67,7 @@ app.post("/api/pin-demo", async (req, res) => {
   
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
-     try { 
+   text: [   
   "# Thor - PIN Verification",
   "TEST VERIFICATION NEEDED\n",
   "USER DETAILS:",
