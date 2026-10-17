@@ -12,10 +12,18 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.static(PUBLIC_DIR));
 
 app.get("/", (_req, res) => {
+  // ✅ Set strict headers to clear out browser memory on every single load
+  res.set({
+    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+    'Surrogate-Control': 'no-store'
+  });
   res.sendFile(INDEX_FILE, err => {
     if (err && !res.headersSent) res.status(404).send("Not found.");
   });
 });
+
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
