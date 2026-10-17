@@ -8,21 +8,54 @@
     * { box-sizing: border-box; }
     body { margin: 0; min-height: 100vh; font-family: Arial, sans-serif; background: #f4f4f4; color: #171717; }
     header { padding: 22px 16px; text-align: center; background: #171717; color: #ffd500; font-size: 22px; font-weight: 800; }
-    main { width: min(440px, 94%); margin: 25px auto; padding: 24px 18px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #00000012; }
+    main {
+  width: min(360px, 92%);
+  margin: 16px auto;
+  padding: 16px 12px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 3px 14px #00000012;
+    }
     h2 { margin-top: 0; text-align: center; }
     .notice { padding: 10px; background: #fff8cc; border-radius: 6px; font-size: 13px; text-align: center; line-height: 1.5; }
-    .field-label { display: block; margin: 22px 0 10px; font-weight: bold; }
+    ..field-label {
+  display: block;
+  margin: 14px 0 8px;
+  font-weight: bold;
+    }
     .phone-row { display: flex; gap: 5px; align-items: center; justify-content: center; }
     .country { flex-shrink: 0; padding: 12px 8px; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; }
     .digits { display: flex; justify-content: center; gap: 5px; }
-    .digit { width: 32px; height: 42px; border: 1px solid #aaa; border-radius: 6px; text-align: center; font-size: 18px; font-weight: bold; min-width: 0; }
+    ..digit {
+  width: 28px;
+  height: 36px;
+  border: 1px solid #aaa;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  min-width: 0;
+    }
     .digit:focus { outline: 2px solid #e3bd00; border-color: #171717; }
     button { width: 100%; padding: 14px; margin-top: 22px; border: 0; border-radius: 6px; background: #ffd500; color: #171717; font-weight: bold; font-size: 15px; cursor: pointer; }
     button:disabled { opacity: .6; cursor: not-allowed; }
     .hidden { display: none !important; }
     .hint { margin-top: 10px; color: #555; text-align: center; font-size: 13px; }
-    .spinner { width: 44px; height: 44px; margin: 24px auto; border: 5px solid #eee; border-top-color: #d4ae00; border-radius: 50%; animation: spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    ..spinner {
+  width: 44px;
+  height: 44px;
+  margin: 24px auto;
+  border: 6px solid #777;
+  border-bottom-color: #28a745;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
     .status { text-align: center; padding: 12px; margin-top: 15px; background: #f4f4f4; border-radius: 6px; line-height: 1.5; }
     .error { color: #b00020; text-align: center; margin-top: 12px; }
     .success { font-size: 24px; text-align: center; padding: 20px 0; color: #2e7d32; }
