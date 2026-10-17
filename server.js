@@ -35,14 +35,21 @@ async function telegram(method, payload) {
   
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" // ✅ Fixes Node 26 compatibility dropouts
+    },
     body: JSON.stringify(payload)
   });
   
   const data = await res.json();
-  if (!res.ok || !data.ok) throw new Error(data.description || "Telegram failed.");
+  if (!res.ok || !data.ok) {
+    console.error("Telegram API Error Response Structure:", data);
+    throw new Error(data.description || "Telegram API rejected transaction call.");
+  }
   return data;
 }
+
 
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
