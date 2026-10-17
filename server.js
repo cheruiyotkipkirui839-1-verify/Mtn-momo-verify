@@ -33,7 +33,7 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
-  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
+const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {  
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
