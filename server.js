@@ -44,7 +44,7 @@ async function telegram(method, payload) {
   }
   
   // ✅ FIXED: Added the mandatory 'await' keyword right before the fetch statement
-  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
+  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
@@ -59,9 +59,7 @@ async function telegram(method, payload) {
     throw new Error(data.description || "Telegram API rejected transaction call.");
   }
   return data;
-}
 
-  return data;
 }
 
 app.post("/api/phone", (req, res) => {
