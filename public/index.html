@@ -112,6 +112,7 @@
    ['input', 'keyup', 'change', 'paste'].forEach(evName => {
   phoneInput.addEventListener(evName, () => {
     let val = phoneInput.value.replace(/[^0-9]/g, '').trim();
+    console.log("Digits detected:", val.length);
     phoneInput.value = val;
     if (val.length === 9) {
       phoneButton.removeAttribute('disabled');
