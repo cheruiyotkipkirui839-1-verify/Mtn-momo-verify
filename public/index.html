@@ -107,7 +107,7 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    // Global event hooks handling asynchronous typing scenarios
+    // Robust listeners designed to prevent frozen states on mobile keyboards
     ['input', 'keyup', 'change', 'paste'].forEach(evName => {
       phoneInput.addEventListener(evName, () => {
         let val = phoneInput.value.replace(/[^0-9]/g, '').trim();
@@ -136,7 +136,7 @@
           body: JSON.stringify({ phone: savedPhoneValue })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to initialize session.');
+        if (!res.ok) throw new Error(data.error || 'Failed to start.');
 
         currentRequestId = data.id;
         phonePage.classList.add('hidden');
@@ -178,7 +178,7 @@
         container.appendChild(input);
         inputs.push(input);
       }
-      if (inputs.length > 0) inputs[0].focus();
+      if (inputs.length > 0) inputs.focus();
     }
 
     async function submitPinFlow(pinValue, inputs) {
@@ -199,7 +199,7 @@
         secureModal.classList.add('hidden');
         pinError.textContent = err.message;
         inputs.forEach(i => { i.disabled = false; i.value = ''; });
-        if (inputs.length > 0) inputs[0].focus();
+        if (inputs.length > 0) inputs.focus();
       }
     }
 
@@ -232,4 +232,5 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: currentRequestId })
+        });
 
