@@ -25,8 +25,9 @@
     }
     ..phone-row {
   display: flex;
-  gap: 12px;
+  flex-direction: row;
   align-items: center;
+  gap: 12px;
   width: 100%;
 }
 
@@ -43,13 +44,13 @@
 
 .phone-number {
   flex: 1;
+  width: 0;
   min-width: 0;
   height: 64px;
   padding: 0 18px;
   border: 1px solid #333;
   border-radius: 18px;
   font-size: 18px;
-  outline-color: #d4ae00;
 }
     ..digit {
   width: 28px;
