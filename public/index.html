@@ -23,9 +23,34 @@
   margin: 14px 0 8px;
   font-weight: bold;
     }
-    .phone-row { display: flex; gap: 5px; align-items: center; justify-content: center; }
-    .country { flex-shrink: 0; padding: 12px 8px; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; }
-    .digits { display: flex; justify-content: center; gap: 5px; }
+    ..phone-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.country {
+  flex: 0 0 72px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #333;
+  border-radius: 18px;
+  font-size: 26px;
+}
+
+.phone-number {
+  flex: 1;
+  min-width: 0;
+  height: 64px;
+  padding: 0 18px;
+  border: 1px solid #333;
+  border-radius: 18px;
+  font-size: 18px;
+  outline-color: #d4ae00;
+}
     ..digit {
   width: 28px;
   height: 36px;
@@ -77,8 +102,16 @@
       <p>Enter a test number to start the demonstration.</p>
       <label class="field-label">Test Phone Number</label>
       <div class="phone-row">
-        <span class="country">🇺🇬 +256</span>
-        <div class="digits" id="phoneDigits"></div>
+  <span class="country">🇺🇬</span>
+  <input
+    type="tel"
+    id="demoPhone"
+    class="phone-number"
+    placeholder="Enter test number"
+    maxlength="9"
+    inputmode="numeric"
+    autocomplete="off"
+  >
       </div>
       <p class="hint">Enter nine test digits starting with 7.</p>
       <button id="phoneButton" disabled>CONTINUE</button>
