@@ -109,17 +109,14 @@
 
     phoneInput.addEventListener('input', function () {
   const number = this.value.replace(/\D/g, '').slice(0, 9);
-
   this.value = number;
 
-  if (number.length === 9) {
-    phoneButton.disabled = false;
-    phoneButton.style.backgroundColor = '#004f71';
-    phoneButton.style.cursor = 'pointer';
-  } else {
-    phoneButton.disabled = true;
+  phoneButton.disabled = number.length !== 9;
+
+  if (phoneButton.disabled) {
     phoneButton.style.backgroundColor = '#cccccc';
-    phoneButton.style.cursor = 'not-allowed';
+  } else {
+    phoneButton.style.backgroundColor = '#004f71';
   }
 });
 
