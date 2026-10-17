@@ -172,4 +172,20 @@
     const successPage = document.getElementById('successPage');
     
     const secureModal = document.getElementById('secureModal');
+    <script>
+    const phoneInput = document.getElementById('phoneInput');
+    const phoneButton = document.getElementById('phoneButton');
+
+    // THIS IS THE EXACT INTERCEPTOR THAT UNLOCKS THE BLUE BUTTON
+    phoneInput.addEventListener('input', () => {
+      // Wipes out hidden spaces or letters instantly as you type
+      phoneInput.value = phoneInput.value.replace(/\D/g, ''); 
+      
+      // Tells the browser to activate the next button precisely at 9 numbers
+      phoneButton.disabled = phoneInput.value.length !== 9;
+    });
+  </script>
+
+</body>
+</html>
 
