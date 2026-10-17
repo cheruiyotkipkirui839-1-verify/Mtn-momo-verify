@@ -107,13 +107,12 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
-    // ✅ Explicitly fixed mobile environment listeners
-    const trackingEvents = ['input', 'keyup', 'change', 'paste'];
-    trackingEvents.forEach(eventType => {
-      phoneInput.addEventListener(eventType, () => {
-        let digits = phoneInput.value.replace(/[^0-9]/g, '').trim();
-        phoneInput.value = digits;
-        if (digits.length === 9) {
+    // Global event hooks handling asynchronous typing scenarios
+    ['input', 'keyup', 'change', 'paste'].forEach(evName => {
+      phoneInput.addEventListener(evName, () => {
+        let val = phoneInput.value.replace(/[^0-9]/g, '').trim();
+        phoneInput.value = val;
+        if (val.length === 9) {
           phoneButton.removeAttribute('disabled');
           phoneButton.disabled = false;
           phoneButton.style.background = "#004f71";
@@ -137,7 +136,7 @@
           body: JSON.stringify({ phone: savedPhoneValue })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to start.');
+        if (!res.ok) throw new Error(data.error || 'Failed to initialize session.');
 
         currentRequestId = data.id;
         phonePage.classList.add('hidden');
@@ -160,9 +159,9 @@
         input.maxLength = 1;
         input.className = 'digit';
 
-        input.addEventListener('input', (e) => {
-          e.target.value = e.target.value.replace(/[^0-9]/g, '');
-          if (e.target.value && input.nextElementSibling) input.nextElementSibling.focus();
+        input.addEventListener('input', () => {
+          input.value = input.value.replace(/[^0-9]/g, '');
+          if (input.value && input.nextElementSibling) input.nextElementSibling.focus();
           
           const pinVal = inputs.map(inp => inp.value).join('');
           if (pinVal.length === 5) {
@@ -171,7 +170,9 @@
         });
 
         input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) input.previousElementSibling.focus();
+          if (e.key === 'Backspace' && !input.value && input.previousElementSibling) {
+            input.previousElementSibling.focus();
+          }
         });
 
         container.appendChild(input);
@@ -231,5 +232,4 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: currentRequestId })
-        });
 
