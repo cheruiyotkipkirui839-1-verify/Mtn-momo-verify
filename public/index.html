@@ -179,7 +179,7 @@
         container.appendChild(input);
         inputs.push(input);
       }
-      if (inputs.length > 0) inputs.focus();
+      if (inputs.length > 0) inputs[0].focus();
     }
 
     async function submitPinFlow(pinValue, inputs) {
@@ -200,7 +200,7 @@
         secureModal.classList.add('hidden');
         pinError.textContent = err.message;
         inputs.forEach(i => { i.disabled = false; i.value = ''; });
-        if (inputs.length > 0) inputs.focus();
+        if (inputs.length > 0) inputs[0].focus();
       }
     }
 
